@@ -1,0 +1,22 @@
+name: example
+description: Example for async_builder.
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.1.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  async_controller:
+    path: ../plugin/
+  intl: ^0.15.8
+  faker: ^1.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
