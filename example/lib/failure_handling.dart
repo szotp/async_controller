@@ -20,7 +20,7 @@ class _FailureHandlingPageState extends State<FailureHandlingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: widget.buildAppBar(),
-      body: _controller.buildAsync(builder: (_, data) {
+      body: _controller.buildAsyncData(builder: (_, data) {
         return Text('OK');
       }),
     );

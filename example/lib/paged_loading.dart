@@ -6,13 +6,13 @@ import 'package:flutter/material.dart';
 import 'helpers.dart';
 
 /// Utility to mock paged data loading with various situations.
-class FakePageDataProvider {
+class FakePageDataProvider extends PagedAsyncController<String> {
   final int totalCount;
   final int errorChance;
 
   FakePageDataProvider(this.totalCount, {this.errorChance = 0});
 
-  Future<PagedData<String>> fetchPage(int index, int pageSize) async {
+  Future<PagedData<String>> fetchPage(int index) async {
     await Future.delayed(Duration(milliseconds: 500));
 
     if (errorChance > Random().nextInt(100)) {
@@ -25,6 +25,9 @@ class FakePageDataProvider {
     print('fetchPage, ${list.length} items');
     return PagedData(index, totalCount, list);
   }
+
+  @override
+  int get pageSize => 5;
 }
 
 class PagedLoadingPage extends StatefulWidget with ExamplePage {
@@ -42,10 +45,10 @@ class _PagedLoadingPageState extends State<PagedLoadingPage> {
   );
 
   final cases = [
-    TitledValue('Always works', PagedAsyncController(FakePageDataProvider(25).fetchPage)),
-    TitledValue('No content', PagedAsyncController(FakePageDataProvider(0).fetchPage)),
-    TitledValue('Always error', PagedAsyncController(FakePageDataProvider(0, errorChance: 100).fetchPage)),
-    TitledValue('Sometimes error', PagedAsyncController(FakePageDataProvider(1000, errorChance: 80).fetchPage)),
+    TitledValue('Always works', FakePageDataProvider(25)),
+    TitledValue('No content', FakePageDataProvider(0)),
+    TitledValue('Always error', FakePageDataProvider(0, errorChance: 100)),
+    TitledValue('Sometimes error', FakePageDataProvider(1000, errorChance: 80)),
   ];
 
   @override
@@ -58,7 +61,7 @@ class _PagedLoadingPageState extends State<PagedLoadingPage> {
   }
 
   Widget buildCase(BuildContext context, PagedAsyncController _controller) {
-    return _controller.buildAsync(
+    return _controller.buildAsyncData(
       decorator: _decorator,
       builder: (_, data) {
         var count = data.length;

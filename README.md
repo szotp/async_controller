@@ -47,9 +47,9 @@ AsyncController automatically handles boring edge cases, letting you focus on th
   controller.addRefresher(ListenerRefresher(listenable));
   ```
 
-5. Easy to use customization through AsyncBuilderDecoration.
+5. Easy to use customization through AsyncDataDecoration.
 ```dart
-class MyDecoration extends AsyncBuilderDecoration {
+class MyDecoration extends AsyncDataDecoration {
   @override
   Widget buildNoDataYet(BuildContext context) => MyProgressIndicator();
 }

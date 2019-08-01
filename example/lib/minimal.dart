@@ -27,7 +27,7 @@ final _controller = AsyncController<String>.method(() async {
 class Minimal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return _controller.buildAsync(builder: (_, data) {
+    return _controller.buildAsyncData(builder: (_, data) {
       return Text(data);
     });
   }

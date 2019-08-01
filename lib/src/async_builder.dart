@@ -4,35 +4,38 @@ import 'package:flutter/widgets.dart';
 
 import 'controller.dart';
 
-typedef Widget AsyncBuilderFunction<T>(BuildContext context, T data);
+typedef Widget AsyncDataFunction<T>(BuildContext context, T data);
 
-class AsyncBuilder<T> extends StatefulWidget {
+/// A widget that let's the user specify builder for asynchronously loaded data.
+/// Error handling, empty state and loading are handled by the widget.
+/// The automatic handling is customizable with AsyncDataDecoration.
+class AsyncData<T> extends StatefulWidget {
   /// Source of data and changes.
   final LoadingValueListenable<T> controller;
 
   /// This builder runs only when data is not null.
-  final AsyncBuilderFunction<T> builder;
+  final AsyncDataFunction<T> builder;
 
-  /// Provides widgets for AsyncBuilder when there is no data to show.
-  final AsyncBuilderDecoration decorator;
+  /// Provides widgets for AsyncData when there is no data to show.
+  final AsyncDataDecoration decorator;
 
-  AsyncBuilder({
+  AsyncData({
     Key key,
     @required this.controller,
     @required this.builder,
-    this.decorator = const AsyncBuilderDecoration(),
+    this.decorator = const AsyncDataDecoration(),
   }) : super(key: key);
 
   @override
-  _AsyncBuilderState createState() => _AsyncBuilderState<T>();
+  _AsyncDataState createState() => _AsyncDataState<T>();
 
-  static AsyncBuilder of(BuildContext context) {
-    final state = context.ancestorStateOfType(TypeMatcher<_AsyncBuilderState>());
+  static AsyncData of(BuildContext context) {
+    final state = context.ancestorStateOfType(TypeMatcher<_AsyncDataState>());
     return state.widget;
   }
 }
 
-class _AsyncBuilderState<T> extends State<AsyncBuilder<T>> {
+class _AsyncDataState<T> extends State<AsyncData<T>> {
   int _version;
 
   @override
@@ -42,7 +45,7 @@ class _AsyncBuilderState<T> extends State<AsyncBuilder<T>> {
   }
 
   @override
-  void didUpdateWidget(AsyncBuilder<T> oldWidget) {
+  void didUpdateWidget(AsyncData<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.controller != oldWidget.controller) {
       oldWidget.controller.removeListener(_handleChange);
@@ -87,9 +90,13 @@ class _AsyncBuilderState<T> extends State<AsyncBuilder<T>> {
   }
 }
 
-/// Provides widgets for AsyncBuilder when there is no data to show.
-class AsyncBuilderDecoration {
-  const AsyncBuilderDecoration();
+/// Provides widgets for AsyncData when there is no data to show.
+class AsyncDataDecoration {
+  factory AsyncDataDecoration.customized({Widget noData}) {
+    return _CustomizedAsyncDataDecoration(noData);
+  }
+
+  const AsyncDataDecoration();
 
   /// There was error during fetch, we don't data to show so we may show error with try again button.
   Widget buildError(BuildContext context, dynamic error, VoidCallback tryAgain) {
@@ -117,7 +124,17 @@ class AsyncBuilderDecoration {
   }
 
   /// Always runs, gives possiblity to add the same widget for each state.
-  Widget decorate(Widget child, AsyncBuilder builder) {
+  Widget decorate(Widget child, AsyncData builder) {
     return child;
+  }
+}
+
+class _CustomizedAsyncDataDecoration extends AsyncDataDecoration {
+  final Widget customNoData;
+  _CustomizedAsyncDataDecoration(this.customNoData);
+
+  @override
+  Widget buildNoData(BuildContext context) {
+    return customNoData;
   }
 }

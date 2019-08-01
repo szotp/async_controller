@@ -43,7 +43,7 @@ class _RefreshersPageState extends State<RefreshersPage> {
           SizedBox(height: 4),
           Container(
             alignment: Alignment.center,
-            child: controller.buildAsync(
+            child: controller.buildAsyncData(
               builder: (context, date) {
                 return Text(
                   formatter.format(date),

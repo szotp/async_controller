@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:async/async.dart';
 import 'package:example/helpers.dart';
 import 'package:example/paged_loading.dart';
 import 'package:example/refreshers_page.dart';
@@ -8,6 +11,7 @@ import 'async_button_example.dart';
 import 'failure_handling.dart';
 import 'minimal.dart';
 import 'pull_to_refresh.dart';
+import 'translator/translator_page.dart';
 
 void main() => runApp(MyApp());
 
@@ -18,6 +22,31 @@ class MyApp extends StatelessWidget {
       home: ExampleSwitcher(),
     );
   }
+}
+
+Stream<List<int>> lol() {
+  final ctr = StreamController<List<int>>();
+  ctr.add([1]);
+  ctr.addError('xxx');
+  ctr.close();
+  return ctr.stream;
+}
+
+Stream<int> lol2() {
+  return lol().expand((x) => x);
+}
+
+Future<List<int>> collect() async {
+  final stream = StreamQueue(lol2());
+  while (true) {
+    final got = await stream.take(1);
+    print('got');
+    if (got.length == 0) {
+      break;
+    }
+  }
+
+  return [];
 }
 
 class ExampleSwitcher extends StatelessWidget {
@@ -31,6 +60,7 @@ class ExampleSwitcher extends StatelessWidget {
       SortAndSearchPage(),
       AsyncButtonPage(),
       RefreshersPage(),
+      TranslatorPage(),
     ];
 
     return Scaffold(

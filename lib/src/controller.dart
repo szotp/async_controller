@@ -1,27 +1,50 @@
+import 'dart:async';
+
 import 'package:async/async.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import 'async_builder.dart';
+import 'utils.dart';
 
 typedef AsyncControllerFetch<T> = Future<T> Function();
 
-/// Interface used by AsyncBuilder
-abstract class LoadingValueListenable<T> implements ValueListenable<T> {
+abstract class Refreshable {
+  Future<void> refresh();
+  void setNeedsRefresh();
+}
+
+/// Interface used by AsyncData
+abstract class LoadingValueListenable<T> implements ValueListenable<T>, Refreshable {
   int get version;
   bool get hasData;
   bool get isLoading;
   Object get error;
 
+  bool get hasFreshData;
+
   Future<void> refresh();
 
-  AsyncBuilder<T> buildAsync({
-    AsyncBuilderFunction<T> builder,
-    AsyncBuilderDecoration decorator = const AsyncBuilderDecoration(),
+  AsyncData<T> buildAsyncData({
+    @required AsyncDataFunction<T> builder,
+    AsyncDataDecoration decorator = const AsyncDataDecoration(),
   }) {
-    return AsyncBuilder(
+    return AsyncData(
       controller: this,
       decorator: decorator,
+      builder: builder,
+    );
+  }
+
+  /// Returns reactive widget that builds when value returned from selector is different than before.
+  /// The selector runs only when this controller changes.
+  Widget buildAsyncProperty<P>({
+    Object Function() selector,
+    @required Widget Function(BuildContext, P) builder,
+  }) {
+    return AsyncPropertyBuilder<P>(
+      selector: selector,
+      listenable: this,
       builder: builder,
     );
   }
@@ -64,15 +87,34 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
   bool get isLoading => _isLoading;
   int get version => _version;
 
-  /// Current data should be
+  ///
+  bool get hasFreshData => _timer == null && !isLoading;
+
   void setNeedsRefresh() {
     _lastFetch = null;
     if (hasListeners) {
-      refresh();
+      final delay = delayToRefresh;
+      if (delay != null) {
+        _cancelRefreshTimer();
+        _timer = Timer(delay, () {
+          if (hasListeners) {
+            refresh();
+          }
+        });
+        notifyListeners();
+      } else {
+        refresh();
+      }
     }
   }
 
+  void _cancelRefreshTimer() {
+    _timer?.cancel();
+    _timer = null;
+  }
+
   void reset() {
+    _cancelRefreshTimer();
     _version = 0;
     _lastFetch = null;
     _value = null;
@@ -92,20 +134,22 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
   @protected
   Future<void> internallyLoadAndNotify([AsyncControllerFetch<T> fetch]) async {
     _isLoading = true;
+    _cancelRefreshTimer();
     notifyListeners();
 
     final method = fetch ?? this.fetch;
 
     /// This was written because failure from Result.capture was being catched by debugger
-    Future<Result<T>> captureResult(Future<T> future) async {
+    Future<Result<T>> captureResult(Future<T> Function() factory) async {
       try {
-        return ValueResult(await future);
+        final result = await factory();
+        return ValueResult(result);
       } catch (e, trace) {
         return ErrorResult(e, trace);
       }
     }
 
-    final newLoading = captureResult(method());
+    final newLoading = captureResult(method);
     _lastFetch = newLoading;
     final newValue = await newLoading;
 
@@ -141,6 +185,9 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
     }
     return _lastFetch;
   }
+
+  Timer _timer;
+  Duration get delayToRefresh => null;
 
   void addRefresher(LoadingRefresher behavior) {
     assert(behavior._controller == null);
@@ -183,6 +230,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
 
   @override
   void dispose() {
+    _cancelRefreshTimer();
     super.dispose();
     if (hasListeners) {
       _deactivate();

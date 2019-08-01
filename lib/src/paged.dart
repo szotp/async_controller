@@ -11,26 +11,25 @@ class PagedData<T> {
 
   PagedData(this.index, this.totalCount, this.data)
       : assert(index != null),
-        assert(totalCount != null),
         assert(data != null);
 }
 
 /// Loads data into array, in pages.
 /// Widget using this controller must call markAccess when accessing the items to continue loading.
-class PagedAsyncController<T> extends AsyncController<List<T>> {
-  PagedAsyncController(this.fetchPage);
-
+abstract class PagedAsyncController<T> extends AsyncController<List<T>> {
   bool get hasAll => _totalCount != null && _totalCount == value.length;
 
   int _totalCount;
 
-  static const pageSize = 5;
+  int get pageSize;
 
-  final Future<PagedData<T>> Function(int index, int pageSize) fetchPage;
+  PagedAsyncController();
+
+  Future<PagedData<T>> fetchPage(int index);
 
   @override
   Future<List<T>> fetch() async {
-    final page = await fetchPage(0, pageSize);
+    final page = await fetchPage(0);
     _totalCount = page.totalCount;
     return page.data;
   }
@@ -46,7 +45,7 @@ class PagedAsyncController<T> extends AsyncController<List<T>> {
       final result = (value ?? []).toList();
 
       internallyLoadAndNotify(() async {
-        final page = await fetchPage(result.length, pageSize);
+        final page = await fetchPage(result.length);
         _totalCount = page.totalCount;
         result.addAll(page.data);
         return result;
@@ -69,7 +68,7 @@ class PagedListView<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return controller.buildAsync(
+    return controller.buildAsyncData(
       decorator: decoration,
       builder: (_, data) {
         var count = data.length;
@@ -98,7 +97,7 @@ class PagedListLoadMoreTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final builder = AsyncBuilder.of(context);
+    final builder = AsyncData.of(context);
     final PagedAsyncController controller = builder.controller;
     final decorator = builder.decorator;
 
@@ -116,7 +115,7 @@ class PagedListLoadMoreTile extends StatelessWidget {
 }
 
 /// Adds custom handling for empty content.
-class PagedListDecoration extends AsyncBuilderDecoration {
+class PagedListDecoration extends AsyncDataDecoration {
   // Widget to display when there is zero items.
   final Widget noDataContent;
 
@@ -150,7 +149,7 @@ class PagedListDecoration extends AsyncBuilderDecoration {
   }
 
   @override
-  Widget decorate(Widget child, AsyncBuilder builder) {
+  Widget decorate(Widget child, AsyncData builder) {
     if (addRefreshIndicator) {
       return RefreshIndicator(
         onRefresh: builder.controller.refresh,

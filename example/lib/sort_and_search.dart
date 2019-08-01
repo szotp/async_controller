@@ -103,7 +103,7 @@ class _SortAndSearchPageState extends State<SortAndSearchPage> {
             ],
           ),
           Expanded(
-            child: _controller.buildAsync(builder: (context, data) {
+            child: _controller.buildAsyncData(builder: (context, data) {
               return ListView.builder(
                 itemCount: data.length,
                 itemBuilder: (context, i) {

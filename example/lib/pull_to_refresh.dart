@@ -36,7 +36,7 @@ class _PullToRefreshPageState extends State<PullToRefreshPage> {
             child: RefreshIndicator(
               /// Calling controller.refresh in RefreshIndicator is all you need to implement pull to refresh
               onRefresh: controller.refresh,
-              child: AsyncBuilder<List<String>>(
+              child: AsyncData<List<String>>(
                 controller: controller,
                 builder: (context, data) {
                   return ListView.builder(
