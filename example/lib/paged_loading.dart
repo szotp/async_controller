@@ -10,9 +10,10 @@ class FakePageDataProvider extends PagedAsyncController<String> {
   final int totalCount;
   final int errorChance;
 
-  FakePageDataProvider(this.totalCount, {this.errorChance = 0});
+  FakePageDataProvider(this.totalCount, {this.errorChance = 0}) : super(5);
 
-  Future<PagedData<String>> fetchPage(int index) async {
+  Future<PagedData<String>> fetchPage(int pageIndex) async {
+    final index = pageSize * pageIndex;
     await Future.delayed(Duration(milliseconds: 500));
 
     if (errorChance > Random().nextInt(100)) {
@@ -53,34 +54,20 @@ class _PagedLoadingPageState extends State<PagedLoadingPage> {
 
   @override
   Widget build(BuildContext context) {
-    return CasePicker<PagedAsyncController>(
+    return CasePicker<FakePageDataProvider>(
       appBar: widget.buildAppBar(),
       cases: cases,
       builder: buildCase,
     );
   }
 
-  Widget buildCase(BuildContext context, PagedAsyncController _controller) {
-    return _controller.buildAsyncData(
-      decorator: _decorator,
-      builder: (_, data) {
-        var count = data.length;
-        if (!_controller.hasAll) {
-          count += 1;
-        }
-
-        return ListView.builder(
-          itemCount: count,
-          itemBuilder: (context, i) {
-            if (i >= data.length) {
-              return PagedListLoadMoreTile();
-            }
-
-            _controller.markAccess(i);
-            return ListTile(title: Text(data[i]));
-          },
-        );
+  Widget buildCase(BuildContext context, FakePageDataProvider _controller) {
+    return PagedListView<String>(
+      dataController: _controller,
+      itemBuilder: (_, i, data) {
+        return Text(data);
       },
+      decoration: _decorator,
     );
   }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:async/async.dart';
 import 'package:example/helpers.dart';
+import 'package:example/huge_list_page.dart';
 import 'package:example/paged_loading.dart';
 import 'package:example/refreshers_page.dart';
 import 'package:example/sort_and_search.dart';
@@ -61,6 +62,7 @@ class ExampleSwitcher extends StatelessWidget {
       AsyncButtonPage(),
       RefreshersPage(),
       TranslatorPage(),
+      HugeListPage(),
     ];
 
     return Scaffold(

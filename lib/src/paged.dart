@@ -1,3 +1,6 @@
+import 'dart:collection';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import 'async_builder.dart';
@@ -15,76 +18,113 @@ class PagedData<T> {
 }
 
 /// Loads data into array, in pages.
-/// Widget using this controller must call markAccess when accessing the items to continue loading.
-abstract class PagedAsyncController<T> extends AsyncController<List<T>> {
-  bool get hasAll => _totalCount != null && _totalCount == value.length;
+/// The value of loader is totalCount of items available. The actual items can be fetched using getItem method.
+abstract class PagedAsyncController<T> extends AsyncController<int> {
+  final CacheMap<int, T> _cache;
+  final int pageSize;
 
-  int _totalCount;
+  int _loadedItemsCount = 0;
 
-  int get pageSize;
+  /// Widget uses this property to determine curently visible amount of items.
+  int get loadedItemsCount => _loadedItemsCount;
 
-  PagedAsyncController();
+  PagedAsyncController(this.pageSize, {CacheMap<int, T> cache}) : this._cache = cache ?? CacheMap(10);
 
-  Future<PagedData<T>> fetchPage(int index);
+  int get totalCount => value;
 
-  @override
-  Future<List<T>> fetch() async {
-    final page = await fetchPage(0);
-    _totalCount = page.totalCount;
-    return page.data;
-  }
+  Future<PagedData<T>> fetchPage(int pageIndex);
 
-  @override
-  bool get hasData => value?.isNotEmpty ?? false;
+  Future<int> _fetchPage(int pageIndex, AsyncStatus status) {
+    return fetchPage(pageIndex).then((page) {
+      if (!status.isCancelled) {
+        _cache[pageIndex] = page;
+        _loadedItemsCount = max(_loadedItemsCount, pageIndex * pageSize + page.data.length);
+      }
 
-  void loadNextPage() {
-    // markAccess runs from build method so we need to wait with updates to avoid
-    // setting state
-    Future.microtask(() {
-      if (isLoading) return; // in case markAccess was called multiple times in one frame
-      final result = (value ?? []).toList();
-
-      internallyLoadAndNotify(() async {
-        final page = await fetchPage(result.length);
-        _totalCount = page.totalCount;
-        result.addAll(page.data);
-        return result;
-      });
+      return page.totalCount;
     });
   }
 
-  void markAccess(int index) {
-    if (value == null || index < (value.length - 1) || isLoading || hasAll) return;
-    loadNextPage();
+  @override
+  Future<int> fetch(AsyncStatus status) async {
+    return _fetchPage(0, status);
+  }
+
+  @override
+  void reset() {
+    _loadedItemsCount = 0;
+    _cache.clear();
+    super.reset();
+  }
+
+  int getPageIndex(int itemIndex) => itemIndex ~/ pageSize;
+
+  @override
+  bool get hasData => value != 0;
+
+  void _schedulePageLoad(int pageIndex) {
+    if (isLoading) return;
+    internallyLoadAndNotify((status) => _fetchPage(pageIndex, status));
+  }
+
+  /// If data for given item is not loaded, getItem will return null and schedule a page load.
+  /// After page is loaded, notifyListeners will be called, which will trigger listener widget to reload.
+  T getItem(int itemIndex) {
+    final pageIndex = itemIndex ~/ pageSize;
+    final itemIndexInPage = itemIndex - pageIndex * pageSize;
+    final page = _cache[pageIndex];
+
+    if (page != null) {
+      return page.data[itemIndexInPage];
+    } else {
+      _schedulePageLoad(pageIndex);
+      return null;
+    }
   }
 }
 
 class PagedListView<T> extends StatelessWidget {
-  final PagedAsyncController<T> controller;
+  final PagedAsyncController<T> dataController;
   final PagedListDecoration decoration;
+  final ScrollController scrollController;
   final Widget Function(BuildContext context, int i, T item) itemBuilder;
 
-  const PagedListView({Key key, @required this.controller, @required this.itemBuilder, @required this.decoration}) : super(key: key);
+  const PagedListView({
+    Key key,
+    @required this.dataController,
+    this.scrollController,
+    @required this.itemBuilder,
+    this.decoration = PagedListDecoration.empty,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return controller.buildAsyncData(
+    return dataController.buildAsyncData(
       decorator: decoration,
-      builder: (_, data) {
-        var count = data.length;
-        if (!controller.hasAll) {
-          count += 1;
+      builder: (_, dataCount) {
+        int count;
+
+        if (decoration.trimToLastLoaded) {
+          count = dataController.loadedItemsCount;
+          final total = dataController.totalCount;
+
+          if (total == null || count < dataController.totalCount) {
+            count += 1;
+          }
+        } else {
+          count = dataCount;
         }
 
         return ListView.builder(
+          controller: scrollController,
           itemCount: count,
           itemBuilder: (context, i) {
-            if (i >= data.length) {
+            final item = dataController.getItem(i);
+            if (item != null) {
+              return itemBuilder(context, i, item);
+            } else {
               return decoration.loadMoreTile;
             }
-
-            controller.markAccess(i);
-            return itemBuilder(context, i, data[i]);
           },
         );
       },
@@ -105,7 +145,7 @@ class PagedListLoadMoreTile extends StatelessWidget {
       animation: controller,
       builder: (context, _) {
         if (controller.error != null && !controller.isLoading) {
-          return decorator.buildError(context, controller.error, controller.loadNextPage);
+          return decorator.buildError(context, controller.error, controller.refresh);
         } else {
           return decorator.buildNoDataYet(context);
         }
@@ -126,10 +166,15 @@ class PagedListDecoration extends AsyncDataDecoration {
   // By default it's PagedListLoadMoreTile, which will decorators loading and error states.
   final Widget loadMoreTile;
 
-  PagedListDecoration({
-    @required this.noDataContent,
+  static const empty = PagedListDecoration();
+
+  final bool trimToLastLoaded;
+
+  const PagedListDecoration({
+    this.noDataContent = const SizedBox(),
     this.addRefreshIndicator = false,
     this.loadMoreTile = const PagedListLoadMoreTile(),
+    this.trimToLastLoaded = true,
   });
 
   @override
@@ -158,5 +203,33 @@ class PagedListDecoration extends AsyncDataDecoration {
     } else {
       return child;
     }
+  }
+}
+
+/// Map with limited number of entries.
+class CacheMap<Key, T> {
+  final int maxCount;
+
+  Map<Key, PagedData<T>> _map = {};
+  Queue<Key> _queue = Queue();
+
+  CacheMap(this.maxCount) : assert(maxCount > 0);
+
+  PagedData<T> operator [](Key key) {
+    return _map[key];
+  }
+
+  void operator []=(Key key, PagedData<T> value) {
+    _queue.add(key);
+    _map[key] = value;
+    if (_queue.length > maxCount) {
+      final toRemove = _queue.removeFirst();
+      _map[toRemove] = null;
+    }
+  }
+
+  void clear() {
+    _queue.clear();
+    _map.clear();
   }
 }

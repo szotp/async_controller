@@ -74,7 +74,6 @@ class _AsyncDataState<T> extends State<AsyncData<T>> {
 
     Widget buildContent() {
       if (widget.controller.hasData) {
-        assert(widget.controller.value != null);
         return widget.builder(context, widget.controller.value);
       } else if (widget.controller.error != null && !widget.controller.isLoading) {
         return widget.decorator.buildError(context, widget.controller.error, widget.controller.refresh);

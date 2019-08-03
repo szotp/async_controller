@@ -27,9 +27,9 @@ class TranslatorController extends AsyncController<String> {
   }
 
   @override
-  Future<String> fetch() {
+  Future<String> fetch(AsyncStatus status) {
     if (_input == null || _input.length < 3) {
-      return null;
+      return Future.value();
     }
     return _service.translate(_input);
   }

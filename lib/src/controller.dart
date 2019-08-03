@@ -1,13 +1,38 @@
 import 'dart:async';
 
-import 'package:async/async.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import 'async_builder.dart';
 import 'utils.dart';
 
+class AsyncStatus {
+  static const cancelledError = 'cancelled';
+  bool _isCancelled = false;
+  bool get isCancelled => _isCancelled;
+
+  Future<T> ifNotCancelled<T>(Future<T> future) {
+    return future.then((x) {
+      if (isCancelled) {
+        throw cancelledError;
+      } else {
+        return x;
+      }
+    });
+  }
+
+  Future<void> _runningFuture;
+
+  static Future<void> runFetch(AsyncControllerFetchExpanded<void> fetch) {
+    final status = AsyncStatus();
+    return fetch(status).catchError((error) {
+      assert(error == cancelledError);
+    });
+  }
+}
+
 typedef AsyncControllerFetch<T> = Future<T> Function();
+typedef AsyncControllerFetchExpanded<T> = Future<T> Function(AsyncStatus status);
 
 abstract class Refreshable {
   Future<void> refresh();
@@ -56,8 +81,9 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
   int _version = 0;
   T _value;
   Object _error;
-  bool _isLoading;
-  Future<void> _lastFetch;
+  bool _isLoading = false;
+
+  AsyncStatus _lastFetch;
 
   /// Behaviors dictate when loading controller needs to reload.
   List<LoadingRefresher> _behaviors = [];
@@ -126,50 +152,53 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
     }
   }
 
-  bool get hasData => _value != null;
+  bool get hasData => _version > 0;
 
   @protected
-  Future<T> fetch();
+  Future<T> fetch(AsyncStatus status);
 
+  /// Runs the fetch method, and updates this controller.
+  /// Custom method can be provided for running, otherwise default fetch will be called.
+  /// If AsyncStatus gets cancelled, for example when users performs pull to refresh,
+  /// this method will ignore the result of fetch completely.
   @protected
-  Future<void> internallyLoadAndNotify([AsyncControllerFetch<T> fetch]) async {
-    _isLoading = true;
-    _cancelRefreshTimer();
-    notifyListeners();
+  Future<void> internallyLoadAndNotify([AsyncControllerFetchExpanded<T> fetch]) {
+    return AsyncStatus.runFetch((status) async {
+      _lastFetch?._isCancelled = true;
+      _lastFetch = status;
 
-    final method = fetch ?? this.fetch;
+      _cancelRefreshTimer();
+      _isLoading = true;
 
-    /// This was written because failure from Result.capture was being catched by debugger
-    Future<Result<T>> captureResult(Future<T> Function() factory) async {
-      try {
-        final result = await factory();
-        return ValueResult(result);
-      } catch (e, trace) {
-        return ErrorResult(e, trace);
+      if (hasListeners) {
+        Future.microtask(() {
+          // this avoids crash when calling load from the build method
+          notifyListeners();
+        });
       }
-    }
 
-    final newLoading = captureResult(method);
-    _lastFetch = newLoading;
-    final newValue = await newLoading;
+      final method = fetch ?? this.fetch;
 
-    if (newLoading != _lastFetch) {
-      // If loading was restarted when future was running, we will just ignore the old result.
-      return;
-    }
+      try {
+        final future = method(status);
+        status._runningFuture = future;
+        _lastFetch = status;
+        final value = await status.ifNotCancelled(future);
 
-    if (newValue.isValue) {
-      _version += 1;
-      _value = newValue.asValue.value;
-      _error = null;
+        _value = value;
+        _version += 1;
+        _error = null;
+      } catch (e) {
+        if (e == AsyncStatus.cancelledError) {
+          return;
+        }
+
+        _error = e;
+      }
+
       _isLoading = false;
-    } else {
-      // _value - keep previous value
-      _error = newValue.asError.error;
-      _isLoading = false;
-    }
-
-    notifyListeners();
+      notifyListeners();
+    });
   }
 
   Future<void> refresh() {
@@ -183,7 +212,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
     if (_lastFetch == null) {
       internallyLoadAndNotify();
     }
-    return _lastFetch;
+    return _lastFetch._runningFuture;
   }
 
   Timer _timer;
@@ -244,7 +273,7 @@ class _SimpleAsyncController<T> extends AsyncController<T> {
   _SimpleAsyncController(this.method);
 
   @override
-  Future<T> fetch() => method();
+  Future<T> fetch(AsyncStatus status) => method();
 }
 
 abstract class LoadingRefresher {
@@ -268,7 +297,7 @@ abstract class MappedAsyncController<BaseValue, MappedValue> extends AsyncContro
   Future<BaseValue> _cachedBase;
 
   @override
-  Future<MappedValue> fetch() async {
+  Future<MappedValue> fetch(AsyncStatus status) async {
     if (_cachedBase == null) {
       _cachedBase = fetchBase();
     }

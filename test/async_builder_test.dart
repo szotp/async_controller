@@ -9,7 +9,7 @@ class Controller extends AsyncController<int> {
   bool shouldFail = false;
 
   @override
-  Future<int> fetch() {
+  Future<int> fetch(AsyncStatus status) {
     bool willFail = shouldFail;
     shouldFail = false;
 

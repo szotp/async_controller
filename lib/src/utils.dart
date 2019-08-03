@@ -18,6 +18,7 @@ class _AsyncPropertyBuilderState<P> extends State<AsyncPropertyBuilder<P>> {
   void initState() {
     super.initState();
     widget.listenable.addListener(_handleChange);
+    _current = widget.selector();
   }
 
   @override
