@@ -28,6 +28,12 @@ class FakePageDataProvider extends PagedAsyncController<String> {
   }
 
   @override
+  void deactivate() {
+    super.deactivate();
+    reset();
+  }
+
+  @override
   int get pageSize => 5;
 }
 
@@ -49,7 +55,7 @@ class _PagedLoadingPageState extends State<PagedLoadingPage> {
     TitledValue('Always works', FakePageDataProvider(25)),
     TitledValue('No content', FakePageDataProvider(0)),
     TitledValue('Always error', FakePageDataProvider(0, errorChance: 100)),
-    TitledValue('Sometimes error', FakePageDataProvider(1000, errorChance: 80)),
+    TitledValue('Sometimes error', FakePageDataProvider(1000, errorChance: 50)),
   ];
 
   @override

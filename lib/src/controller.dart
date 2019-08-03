@@ -11,14 +11,13 @@ class AsyncStatus {
   bool _isCancelled = false;
   bool get isCancelled => _isCancelled;
 
-  Future<T> ifNotCancelled<T>(Future<T> future) {
-    return future.then((x) {
-      if (isCancelled) {
-        throw cancelledError;
-      } else {
-        return x;
-      }
-    });
+  Future<T> ifNotCancelled<T>(Future<T> future) async {
+    final result = await future;
+    if (isCancelled) {
+      throw cancelledError;
+    }
+
+    return result;
   }
 
   Future<void> _runningFuture;
@@ -65,13 +64,44 @@ abstract class LoadingValueListenable<T> implements ValueListenable<T>, Refresha
   /// Returns reactive widget that builds when value returned from selector is different than before.
   /// The selector runs only when this controller changes.
   Widget buildAsyncProperty<P>({
-    Object Function() selector,
+    P Function() selector,
     @required Widget Function(BuildContext, P) builder,
   }) {
     return AsyncPropertyBuilder<P>(
       selector: selector,
       listenable: this,
       builder: builder,
+    );
+  }
+
+  Widget buildAsyncVisibility({bool Function() selector, Widget child}) {
+    return AsyncPropertyBuilder<bool>(
+      selector: selector,
+      listenable: this,
+      builder: (_, visible) {
+        return Visibility(
+          visible: visible,
+          child: child,
+        );
+      },
+    );
+  }
+
+  Widget buildAsyncOpacity({
+    bool Function() selector,
+    Widget child,
+    double opacityForTrue = 1.0,
+    double opacityForFalse = 0.5,
+  }) {
+    return AsyncPropertyBuilder<bool>(
+      selector: selector,
+      listenable: this,
+      builder: (_, value) {
+        return Opacity(
+          opacity: value ? opacityForTrue : opacityForFalse,
+          child: child,
+        );
+      },
     );
   }
 }
@@ -150,6 +180,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
   void reset() {
     _cancelRefreshTimer();
     _version = 0;
+    _lastFetch?._isCancelled = true;
     _lastFetch = null;
     _value = null;
     _error = null;
@@ -161,7 +192,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
   }
 
   @override
-  bool get hasData => _version > 0;
+  bool get hasData => _value != null;
 
   @protected
   Future<T> fetch(AsyncStatus status);
@@ -192,6 +223,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
         final future = method(status);
         status._runningFuture = future;
         _lastFetch = status;
+
         final value = await status.ifNotCancelled(future);
 
         _value = value;
@@ -238,14 +270,16 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
     }
   }
 
-  void _activate() {
+  @protected
+  void activate() {
     for (var b in _behaviors) {
       b.activate();
     }
     loadIfNeeded();
   }
 
-  void _deactivate() {
+  @protected
+  void deactivate() {
     for (var b in _behaviors) {
       b.deactivate();
     }
@@ -254,7 +288,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
   @override
   void addListener(listener) {
     if (!hasListeners) {
-      _activate();
+      activate();
     }
     super.addListener(listener);
   }
@@ -263,7 +297,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
   void removeListener(listener) {
     super.removeListener(listener);
     if (!hasListeners) {
-      _deactivate();
+      deactivate();
     }
   }
 
@@ -272,7 +306,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
     _cancelRefreshTimer();
     super.dispose();
     if (hasListeners) {
-      _deactivate();
+      deactivate();
     }
   }
 }
@@ -331,4 +365,7 @@ abstract class MappedAsyncController<BaseValue, MappedValue> extends AsyncContro
 }
 
 /// A controller that loads a list and then removes some items from it.
-abstract class FilteringAsyncController<Value> extends MappedAsyncController<List<Value>, List<Value>> {}
+abstract class FilteringAsyncController<Value> extends MappedAsyncController<List<Value>, List<Value>> {
+  @override
+  bool get hasData => super.hasData && value.isNotEmpty;
+}

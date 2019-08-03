@@ -86,10 +86,10 @@ class _SortAndSearchPageState extends State<SortAndSearchPage> {
               Align(
                 alignment: Alignment.centerRight,
                 child: FlatButton(
-                  child: AnimatedBuilder(
-                    animation: _controller,
-                    builder: (context, _) {
-                      final asc = _controller.sorting == Sorting.ascending;
+                  child: _controller.buildAsyncProperty<Sorting>(
+                    selector: () => _controller.sorting,
+                    builder: (context, sorting) {
+                      final asc = sorting == Sorting.ascending;
                       if (asc) {
                         return Text('A -> Z');
                       } else {
@@ -103,16 +103,18 @@ class _SortAndSearchPageState extends State<SortAndSearchPage> {
             ],
           ),
           Expanded(
-            child: _controller.buildAsyncData(builder: (context, data) {
-              return ListView.builder(
-                itemCount: data.length,
-                itemBuilder: (context, i) {
-                  return ListTile(
-                    title: Text(data[i]),
+            child: _controller.buildAsyncData(
+                builder: (context, data) {
+                  return ListView.builder(
+                    itemCount: data.length,
+                    itemBuilder: (context, i) {
+                      return ListTile(
+                        title: Text(data[i]),
+                      );
+                    },
                   );
                 },
-              );
-            }),
+                decorator: PagedListDecoration(noDataContent: Text('I found nothing...'))),
           ),
         ],
       ),

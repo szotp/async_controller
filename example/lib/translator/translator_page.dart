@@ -36,17 +36,7 @@ class TranslatorController extends AsyncController<String> {
 }
 
 class _TranslatorPageState extends State<TranslatorPage> {
-  final _controller = TranslatorController();
-
-  /// child will be slightly transparent when data is not fresh
-  Widget buildDynamicOpacity(Widget child) {
-    return _controller.buildAsyncProperty(
-      selector: () => _controller.hasFreshData,
-      builder: (context, hasFreshData) {
-        return Opacity(opacity: hasFreshData ? 1.0 : 0.5, child: child);
-      },
-    );
-  }
+  final _data = TranslatorController();
 
   @override
   Widget build(BuildContext context) {
@@ -57,14 +47,21 @@ class _TranslatorPageState extends State<TranslatorPage> {
         child: Column(
           children: <Widget>[
             TextField(
-              onChanged: _controller.setInput,
+              onChanged: _data.setInput,
+              decoration: InputDecoration(
+                suffixIcon: _data.buildAsyncVisibility(
+                  selector: () => _data.isLoading,
+                  child: Icon(Icons.timer),
+                ),
+              ),
             ),
             SizedBox(height: 16),
-            buildDynamicOpacity(
-              _controller.buildAsyncData(
+            _data.buildAsyncOpacity(
+              selector: () => _data.hasFreshData,
+              child: _data.buildAsyncData(
                 builder: (_, output) {
                   return Text(
-                    output,
+                    output ?? '',
                     style: TextStyle(fontSize: 30),
                   );
                 },

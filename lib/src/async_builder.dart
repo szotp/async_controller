@@ -50,6 +50,7 @@ class _AsyncDataState<T> extends State<AsyncData<T>> {
     if (widget.controller != oldWidget.controller) {
       oldWidget.controller.removeListener(_handleChange);
       widget.controller.addListener(_handleChange);
+      _version = null;
     }
   }
 

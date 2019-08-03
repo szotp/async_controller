@@ -8,9 +8,7 @@ import 'controller.dart';
 
 /// A slice of bigger array, returned from backend. All values must not be null.
 class PagedData<T> {
-  PagedData(this.index, this.totalCount, this.data)
-      : assert(index != null),
-        assert(data != null);
+  PagedData(this.index, this.totalCount, this.data);
 
   final int index;
   final int totalCount;
@@ -20,9 +18,9 @@ class PagedData<T> {
 /// Loads data into array, in pages.
 /// The value of loader is totalCount of items available. The actual items can be fetched using getItem method.
 abstract class PagedAsyncController<T> extends AsyncController<int> {
-  PagedAsyncController(this.pageSize, {CacheMap<int, T> cache}) : _cache = cache ?? CacheMap(10);
+  PagedAsyncController(this.pageSize, {CacheMap<int, PagedData<T>> cache}) : _cache = cache ?? CacheMap(10);
 
-  final CacheMap<int, T> _cache;
+  final CacheMap<int, PagedData<T>> _cache;
   final int pageSize;
 
   int _loadedItemsCount = 0;
@@ -34,15 +32,18 @@ abstract class PagedAsyncController<T> extends AsyncController<int> {
 
   Future<PagedData<T>> fetchPage(int pageIndex);
 
-  Future<int> _fetchPage(int pageIndex, AsyncStatus status) {
-    return fetchPage(pageIndex).then((page) {
+  Future<int> _fetchPage(int pageIndex, AsyncStatus status) async {
+    try {
+      final page = await fetchPage(pageIndex);
       if (!status.isCancelled) {
         _cache[pageIndex] = page;
         _loadedItemsCount = max(_loadedItemsCount, pageIndex * pageSize + page.data.length);
       }
-
       return page.totalCount;
-    });
+    } catch (e) {
+      _cache[pageIndex] = PagedData(pageIndex, totalCount, null);
+      rethrow;
+    }
   }
 
   @override
@@ -57,12 +58,15 @@ abstract class PagedAsyncController<T> extends AsyncController<int> {
     super.reset();
   }
 
-  int getPageIndex(int itemIndex) => itemIndex ~/ pageSize;
-
   @override
-  bool get hasData => value != 0;
+  bool get hasData => value != 0 && version > 0;
 
-  void _schedulePageLoad(int pageIndex) {
+  void refreshFailedPage() {
+    final lastPageIndex = _cache._queue.last;
+    schedulePageLoad(lastPageIndex);
+  }
+
+  void schedulePageLoad(int pageIndex) {
     if (isLoading) {
       return;
     }
@@ -77,9 +81,13 @@ abstract class PagedAsyncController<T> extends AsyncController<int> {
     final page = _cache[pageIndex];
 
     if (page != null) {
-      return page.data[itemIndexInPage];
+      if (page.data != null) {
+        return page.data[itemIndexInPage];
+      } else {
+        return null;
+      }
     } else {
-      _schedulePageLoad(pageIndex);
+      schedulePageLoad(pageIndex);
       return null;
     }
   }
@@ -104,9 +112,11 @@ class PagedListView<T> extends StatelessWidget {
     return dataController.buildAsyncData(
       decorator: decoration,
       builder: (_, totalCount) {
+        final itemCount = decoration.getTileCount(dataController.loadedItemsCount, totalCount);
+
         return ListView.builder(
           controller: scrollController,
-          itemCount: decoration.getTileCount(dataController.loadedItemsCount, totalCount),
+          itemCount: itemCount,
           itemBuilder: (context, i) {
             final item = dataController.getItem(i);
             if (item != null) {
@@ -130,11 +140,11 @@ class PagedListLoadMoreTile extends StatelessWidget {
     final PagedAsyncController controller = builder.controller;
     final decorator = builder.decorator;
 
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) {
-        if (controller.error != null && !controller.isLoading) {
-          return decorator.buildError(context, controller.error, controller.refresh);
+    return controller.buildAsyncProperty<bool>(
+      selector: () => controller.error != null && !controller.isLoading,
+      builder: (context, showError) {
+        if (showError) {
+          return decorator.buildError(context, controller.error, controller.refreshFailedPage);
         } else {
           return decorator.buildNoDataYet(context);
         }
@@ -218,14 +228,19 @@ class CacheMap<Key, T> {
 
   final int maxCount;
 
-  final Map<Key, PagedData<T>> _map = {};
+  final Map<Key, T> _map = {};
   final Queue<Key> _queue = Queue();
 
-  PagedData<T> operator [](Key key) {
+  T operator [](Key key) {
     return _map[key];
   }
 
-  void operator []=(Key key, PagedData<T> value) {
+  void operator []=(Key key, T value) {
+    if (_map[key] != null) {
+      _map.remove(key);
+      _queue.removeWhere((other) => other == key);
+    }
+
     _queue.add(key);
     _map[key] = value;
     if (_queue.length > maxCount) {
