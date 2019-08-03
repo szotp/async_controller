@@ -10,7 +10,7 @@ class Controller extends AsyncController<int> {
 
   @override
   Future<int> fetch(AsyncStatus status) {
-    bool willFail = shouldFail;
+    final willFail = shouldFail;
     shouldFail = false;
 
     return Future.microtask(() {
@@ -23,14 +23,14 @@ class Controller extends AsyncController<int> {
 }
 
 class Recorder<T> {
-  final AsyncController<T> input;
-  final data = <T>[];
-  final snapshots = <String>[];
-
   Recorder(this.input) {
     input.addListener(onChanged);
     onChanged();
   }
+
+  final AsyncController<T> input;
+  final data = <T>[];
+  final snapshots = <String>[];
 
   void dispose() {
     input.removeListener(onChanged);
@@ -51,20 +51,20 @@ void main() {
   test('test initial conditions', () {
     final loader = Controller();
     expect(loader.value, null);
-    expect(loader.snapshot, AsyncSnapshot.nothing());
+    expect(loader.snapshot, const AsyncSnapshot<int>.nothing());
   });
 
   test('test loads on listener', () {
     final loader = Controller();
     loader.addListener(() {});
-    expect(loader.snapshot, AsyncSnapshot.nothing().inState(ConnectionState.waiting));
+    expect(loader.snapshot, const AsyncSnapshot<int>.nothing().inState(ConnectionState.waiting));
   });
 
   test('test loads on listener and finishes', () async {
     final loader = Controller();
     loader.addListener(() {});
-    await Future.value();
-    expect(loader.snapshot, AsyncSnapshot.withData(ConnectionState.done, 1));
+    await Future<void>.value();
+    expect(loader.snapshot, const AsyncSnapshot<int>.withData(ConnectionState.done, 1));
   });
 
   test('test loadIfNeeded once', () async {

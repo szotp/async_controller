@@ -25,12 +25,12 @@ class InForegroundRefresher extends LoadingRefresher with WidgetsBindingObserver
 }
 
 class OnReconnectedRefresher extends LoadingRefresher {
+  OnReconnectedRefresher([this.alwaysRefresh = false]);
+
   final bool alwaysRefresh;
 
   StreamSubscription _sub;
   bool _wasConnected = false;
-
-  OnReconnectedRefresher([this.alwaysRefresh = false]);
 
   @override
   void activate() {
@@ -57,11 +57,11 @@ class OnReconnectedRefresher extends LoadingRefresher {
 
 /// Updates loading controller every given period.
 class PeriodicRefresher extends LoadingRefresher {
+  PeriodicRefresher(this.period) : assert(period != null);
+
   final Duration period;
 
   Timer _timer;
-
-  PeriodicRefresher(this.period) : assert(period != null);
 
   void onTick(Timer timer) {
     controller.setNeedsRefresh();
@@ -79,9 +79,9 @@ class PeriodicRefresher extends LoadingRefresher {
 }
 
 class ListenerRefresher extends LoadingRefresher {
-  final Listenable listenable;
-
   ListenerRefresher(this.listenable);
+
+  final Listenable listenable;
 
   @override
   void activate() {

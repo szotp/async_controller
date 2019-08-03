@@ -8,18 +8,20 @@ import 'controller.dart';
 
 /// A slice of bigger array, returned from backend. All values must not be null.
 class PagedData<T> {
-  final int index;
-  final int totalCount;
-  final List<T> data;
-
   PagedData(this.index, this.totalCount, this.data)
       : assert(index != null),
         assert(data != null);
+
+  final int index;
+  final int totalCount;
+  final List<T> data;
 }
 
 /// Loads data into array, in pages.
 /// The value of loader is totalCount of items available. The actual items can be fetched using getItem method.
 abstract class PagedAsyncController<T> extends AsyncController<int> {
+  PagedAsyncController(this.pageSize, {CacheMap<int, T> cache}) : _cache = cache ?? CacheMap(10);
+
   final CacheMap<int, T> _cache;
   final int pageSize;
 
@@ -27,8 +29,6 @@ abstract class PagedAsyncController<T> extends AsyncController<int> {
 
   /// Widget uses this property to determine curently visible amount of items.
   int get loadedItemsCount => _loadedItemsCount;
-
-  PagedAsyncController(this.pageSize, {CacheMap<int, T> cache}) : this._cache = cache ?? CacheMap(10);
 
   int get totalCount => value;
 
@@ -63,7 +63,9 @@ abstract class PagedAsyncController<T> extends AsyncController<int> {
   bool get hasData => value != 0;
 
   void _schedulePageLoad(int pageIndex) {
-    if (isLoading) return;
+    if (isLoading) {
+      return;
+    }
     internallyLoadAndNotify((status) => _fetchPage(pageIndex, status));
   }
 
@@ -84,11 +86,6 @@ abstract class PagedAsyncController<T> extends AsyncController<int> {
 }
 
 class PagedListView<T> extends StatelessWidget {
-  final PagedAsyncController<T> dataController;
-  final PagedListDecoration decoration;
-  final ScrollController scrollController;
-  final Widget Function(BuildContext context, int i, T item) itemBuilder;
-
   const PagedListView({
     Key key,
     @required this.dataController,
@@ -96,6 +93,11 @@ class PagedListView<T> extends StatelessWidget {
     @required this.itemBuilder,
     this.decoration = PagedListDecoration.empty,
   }) : super(key: key);
+
+  final PagedAsyncController<T> dataController;
+  final PagedListDecoration decoration;
+  final ScrollController scrollController;
+  final Widget Function(BuildContext context, int i, T item) itemBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -143,6 +145,13 @@ class PagedListLoadMoreTile extends StatelessWidget {
 
 /// Adds custom handling for empty content.
 class PagedListDecoration extends AsyncDataDecoration {
+  const PagedListDecoration({
+    this.noDataContent = const SizedBox(),
+    this.addRefreshIndicator = false,
+    this.loadMoreTile = const PagedListLoadMoreTile(),
+    this.trimToLastLoaded = true,
+  });
+
   // Widget to display when there is zero items.
   final Widget noDataContent;
 
@@ -156,13 +165,6 @@ class PagedListDecoration extends AsyncDataDecoration {
   static const empty = PagedListDecoration();
 
   final bool trimToLastLoaded;
-
-  const PagedListDecoration({
-    this.noDataContent = const SizedBox(),
-    this.addRefreshIndicator = false,
-    this.loadMoreTile = const PagedListLoadMoreTile(),
-    this.trimToLastLoaded = true,
-  });
 
   @override
   Widget buildNoData(BuildContext context) {
@@ -212,12 +214,12 @@ class PagedListDecoration extends AsyncDataDecoration {
 
 /// Map with limited number of entries.
 class CacheMap<Key, T> {
+  CacheMap(this.maxCount) : assert(maxCount > 0);
+
   final int maxCount;
 
-  Map<Key, PagedData<T>> _map = {};
-  Queue<Key> _queue = Queue();
-
-  CacheMap(this.maxCount) : assert(maxCount > 0);
+  final Map<Key, PagedData<T>> _map = {};
+  final Queue<Key> _queue = Queue();
 
   PagedData<T> operator [](Key key) {
     return _map[key];

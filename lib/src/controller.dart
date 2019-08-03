@@ -25,7 +25,7 @@ class AsyncStatus {
 
   static Future<void> runFetch(AsyncControllerFetchExpanded<void> fetch) {
     final status = AsyncStatus();
-    return fetch(status).catchError((error) {
+    return fetch(status).catchError((dynamic error) {
       assert(error == cancelledError);
     });
   }
@@ -48,6 +48,7 @@ abstract class LoadingValueListenable<T> implements ValueListenable<T>, Refresha
 
   bool get hasFreshData;
 
+  @override
   Future<void> refresh();
 
   AsyncData<T> buildAsyncData({
@@ -77,6 +78,12 @@ abstract class LoadingValueListenable<T> implements ValueListenable<T>, Refresha
 
 /// A controller for managing asynchronously loading data.
 abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListenable<T> {
+  AsyncController();
+
+  factory AsyncController.method(AsyncControllerFetch<T> method) {
+    return _SimpleAsyncController(method);
+  }
+
   /// _version == 0 means that there is no data
   int _version = 0;
   T _value;
@@ -86,7 +93,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
   AsyncStatus _lastFetch;
 
   /// Behaviors dictate when loading controller needs to reload.
-  List<LoadingRefresher> _behaviors = [];
+  final List<LoadingRefresher> _behaviors = [];
 
   /// AsyncController can contain value, error and be loading at the same time.
   /// This property simplifies things by using value if it exists, ignoring the error or loading
@@ -97,25 +104,26 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
     } else if (_error != null) {
       return AsyncSnapshot.withError(ConnectionState.done, _error);
     } else {
-      return AsyncSnapshot.withData(ConnectionState.waiting, null);
+      return const AsyncSnapshot.withData(ConnectionState.waiting, null);
     }
-  }
-
-  AsyncController();
-
-  factory AsyncController.method(AsyncControllerFetch<T> method) {
-    return _SimpleAsyncController(method);
   }
 
   @override
   T get value => _value;
+
+  @override
   Object get error => _error;
+
+  @override
   bool get isLoading => _isLoading;
+
+  @override
   int get version => _version;
 
-  ///
+  @override
   bool get hasFreshData => _timer == null && !isLoading;
 
+  @override
   void setNeedsRefresh() {
     _lastFetch = null;
     if (hasListeners) {
@@ -152,6 +160,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
     }
   }
 
+  @override
   bool get hasData => _version > 0;
 
   @protected
@@ -171,7 +180,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
       _isLoading = true;
 
       if (hasListeners) {
-        Future.microtask(() {
+        final _ = Future.microtask(() {
           // this avoids crash when calling load from the build method
           notifyListeners();
         });
@@ -201,6 +210,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
     });
   }
 
+  @override
   Future<void> refresh() {
     return internallyLoadAndNotify();
   }
@@ -268,9 +278,9 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
 }
 
 class _SimpleAsyncController<T> extends AsyncController<T> {
-  final AsyncControllerFetch<T> method;
-
   _SimpleAsyncController(this.method);
+
+  final AsyncControllerFetch<T> method;
 
   @override
   Future<T> fetch(AsyncStatus status) => method();
@@ -298,15 +308,13 @@ abstract class MappedAsyncController<BaseValue, MappedValue> extends AsyncContro
 
   @override
   Future<MappedValue> fetch(AsyncStatus status) async {
-    if (_cachedBase == null) {
-      _cachedBase = fetchBase();
-    }
+    _cachedBase ??= fetchBase();
 
     try {
       return transform(await _cachedBase);
     } catch (e) {
       _cachedBase = null;
-      throw e;
+      rethrow;
     }
   }
 

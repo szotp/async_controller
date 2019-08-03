@@ -1,14 +1,14 @@
 import 'package:flutter/widgets.dart';
 
 class AsyncPropertyBuilder<P> extends StatefulWidget {
+  const AsyncPropertyBuilder({Key key, this.selector, this.builder, this.listenable}) : super(key: key);
+
   final Listenable listenable;
   final P Function() selector;
   final Widget Function(BuildContext, P) builder;
 
-  const AsyncPropertyBuilder({Key key, this.selector, this.builder, this.listenable}) : super(key: key);
-
   @override
-  _AsyncPropertyBuilderState createState() => _AsyncPropertyBuilderState();
+  _AsyncPropertyBuilderState createState() => _AsyncPropertyBuilderState<P>();
 }
 
 class _AsyncPropertyBuilderState<P> extends State<AsyncPropertyBuilder<P>> {

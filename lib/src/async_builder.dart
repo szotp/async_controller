@@ -4,12 +4,19 @@ import 'package:flutter/widgets.dart';
 
 import 'controller.dart';
 
-typedef Widget AsyncDataFunction<T>(BuildContext context, T data);
+typedef AsyncDataFunction<T> = Widget Function(BuildContext context, T data);
 
 /// A widget that let's the user specify builder for asynchronously loaded data.
 /// Error handling, empty state and loading are handled by the widget.
 /// The automatic handling is customizable with AsyncDataDecoration.
 class AsyncData<T> extends StatefulWidget {
+  const AsyncData({
+    Key key,
+    @required this.controller,
+    @required this.builder,
+    this.decorator = const AsyncDataDecoration(),
+  }) : super(key: key);
+
   /// Source of data and changes.
   final LoadingValueListenable<T> controller;
 
@@ -19,18 +26,11 @@ class AsyncData<T> extends StatefulWidget {
   /// Provides widgets for AsyncData when there is no data to show.
   final AsyncDataDecoration decorator;
 
-  AsyncData({
-    Key key,
-    @required this.controller,
-    @required this.builder,
-    this.decorator = const AsyncDataDecoration(),
-  }) : super(key: key);
-
   @override
   _AsyncDataState createState() => _AsyncDataState<T>();
 
   static AsyncData of(BuildContext context) {
-    final state = context.ancestorStateOfType(TypeMatcher<_AsyncDataState>());
+    final state = context.ancestorStateOfType(const TypeMatcher<_AsyncDataState>());
     return state.widget;
   }
 }
@@ -84,18 +84,18 @@ class _AsyncDataState<T> extends State<AsyncData<T>> {
       }
     }
 
-    Widget child = buildContent();
+    final child = buildContent();
     return widget.decorator.decorate(child, widget);
   }
 }
 
 /// Provides widgets for AsyncData when there is no data to show.
 class AsyncDataDecoration {
+  const AsyncDataDecoration();
+
   factory AsyncDataDecoration.customized({Widget noData}) {
     return _CustomizedAsyncDataDecoration(noData);
   }
-
-  const AsyncDataDecoration();
 
   /// There was error during fetch, we don't data to show so we may show error with try again button.
   Widget buildError(BuildContext context, dynamic error, VoidCallback tryAgain) {
@@ -113,7 +113,7 @@ class AsyncDataDecoration {
   /// There is no data because it was not loaded yet.
   Widget buildNoDataYet(BuildContext context) {
     return Center(
-      child: CircularProgressIndicator(),
+      child: const CircularProgressIndicator(),
     );
   }
 
@@ -129,8 +129,8 @@ class AsyncDataDecoration {
 }
 
 class _CustomizedAsyncDataDecoration extends AsyncDataDecoration {
-  final Widget customNoData;
   _CustomizedAsyncDataDecoration(this.customNoData);
+  final Widget customNoData;
 
   @override
   Widget buildNoData(BuildContext context) {

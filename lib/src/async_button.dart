@@ -4,14 +4,23 @@ typedef AsyncButtonFunction = Future<void> Function();
 typedef AsyncButtonBuilder = Widget Function(AsyncButtonSettings settings);
 
 class AsyncButtonSettings {
+  AsyncButtonSettings(this.context, this.child, this.onPressed);
+
   final BuildContext context;
   final Opacity child;
   final VoidCallback onPressed;
-
-  AsyncButtonSettings(this.context, this.child, this.onPressed);
 }
 
 class AsyncButton extends StatefulWidget {
+  const AsyncButton({
+    Key key,
+    @required this.onPressed,
+    @required this.child,
+    this.builder,
+    this.loadingColor,
+    this.lockInterface = true,
+  }) : super(key: key);
+
   final AsyncButtonFunction onPressed;
   final Widget child;
   final AsyncButtonBuilder builder;
@@ -21,15 +30,6 @@ class AsyncButton extends StatefulWidget {
   /// Note: if false, this button will still support only one execution at a time
   /// This flag is more useful to prevent user from pressing on multiple different commands.
   final bool lockInterface;
-
-  AsyncButton({
-    Key key,
-    @required this.onPressed,
-    @required this.child,
-    this.builder,
-    this.loadingColor,
-    this.lockInterface = true,
-  }) : super(key: key);
 
   @override
   AsyncButtonState createState() => AsyncButtonState();
@@ -118,12 +118,12 @@ class AsyncButtonState extends State<AsyncButton> {
 
       await widget.onPressed();
     } catch (e) {
-      if (this.mounted) {
+      if (mounted) {
         widget.showError(e, context);
       }
     } finally {
       _entry?.remove();
-      if (this.mounted) {
+      if (mounted) {
         _update(false);
       }
     }
