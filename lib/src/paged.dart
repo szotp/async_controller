@@ -101,23 +101,10 @@ class PagedListView<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return dataController.buildAsyncData(
       decorator: decoration,
-      builder: (_, dataCount) {
-        int count;
-
-        if (decoration.trimToLastLoaded) {
-          count = dataController.loadedItemsCount;
-          final total = dataController.totalCount;
-
-          if (total == null || count < dataController.totalCount) {
-            count += 1;
-          }
-        } else {
-          count = dataCount;
-        }
-
+      builder: (_, totalCount) {
         return ListView.builder(
           controller: scrollController,
-          itemCount: count,
+          itemCount: decoration.getTileCount(dataController.loadedItemsCount, totalCount),
           itemBuilder: (context, i) {
             final item = dataController.getItem(i);
             if (item != null) {
@@ -203,6 +190,23 @@ class PagedListDecoration extends AsyncDataDecoration {
     } else {
       return child;
     }
+  }
+
+  int getTileCount(int loadedItemsCount, int totalCount) {
+    int count;
+
+    if (trimToLastLoaded) {
+      count = loadedItemsCount;
+      final total = totalCount;
+
+      if (total == null || count < totalCount) {
+        count += 1;
+      }
+    } else {
+      count = totalCount;
+    }
+
+    return count;
   }
 }
 

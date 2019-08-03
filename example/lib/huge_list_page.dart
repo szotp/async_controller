@@ -1,5 +1,6 @@
 import 'package:async_controller/async_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import 'helpers.dart';
 
@@ -24,7 +25,7 @@ class HugeListPage extends StatefulWidget with ExamplePage {
 
 class _HugeListPageState extends State<HugeListPage> {
   final _controller = _HugeListController();
-  final _scrollController = ScrollController(initialScrollOffset: tileHeight * 10000);
+  final _scrollController = ScrollController(initialScrollOffset: tileHeight * 10000000);
 
   @override
   void initState() {
@@ -37,28 +38,73 @@ class _HugeListPageState extends State<HugeListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: widget.buildAppBar(),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final aspectRatio = constraints.maxWidth / tileHeight;
+      body: _controller.buildAsyncData(builder: (context, totalCount) {
+        // With GridView we can calculate position for given tile without loading every previous tile
+        // This lets us instantly jump right into tile X
+        // If you don't need jumping functionality, consider using PagedListView
+        return GridView.builder(
+          controller: _scrollController,
+          gridDelegate: ConstTileHeightGridDelegate(tileHeight),
+          itemBuilder: (context, i) {
+            final item = _controller.getItem(i);
 
-          return _controller.buildAsyncData(builder: (context, totalCount) {
-            // GridView is needed here because it can't calculate position for tile x without calculating height of previous tiles
-            return GridView.builder(
-              controller: _scrollController,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 1, childAspectRatio: aspectRatio),
-              itemBuilder: (context, i) {
-                final item = _controller.getItem(i);
-
-                if (item != null) {
-                  return Text(item.toString());
-                } else {
-                  return Text('Loading...');
-                }
-              },
-            );
-          });
-        },
-      ),
+            if (item != null) {
+              return Text(item.toString());
+            } else {
+              return Text('Loading...');
+            }
+          },
+        );
+      }),
     );
+  }
+}
+
+class ConstTileHeightGridDelegate extends SliverGridDelegate {
+  final tileHeight;
+  SliverConstraints constraints;
+
+  ConstTileHeightGridDelegate(this.tileHeight);
+
+  @override
+  SliverGridLayout getLayout(SliverConstraints constraints) {
+    return ConstTileHeightGridLayout(constraints.crossAxisExtent, tileHeight);
+  }
+
+  @override
+  bool shouldRelayout(SliverGridDelegate oldDelegate) {
+    return false;
+  }
+}
+
+class ConstTileHeightGridLayout extends SliverGridLayout {
+  final width;
+  final tileHeight;
+
+  ConstTileHeightGridLayout(this.width, this.tileHeight);
+
+  @override
+  double computeMaxScrollOffset(int childCount) {
+    return childCount * tileHeight;
+  }
+
+  @override
+  SliverGridGeometry getGeometryForChildIndex(int index) {
+    return SliverGridGeometry(
+      crossAxisExtent: width,
+      mainAxisExtent: tileHeight,
+      crossAxisOffset: 0,
+      scrollOffset: index * tileHeight,
+    );
+  }
+
+  @override
+  int getMaxChildIndexForScrollOffset(double scrollOffset) {
+    return scrollOffset ~/ tileHeight + 1;
+  }
+
+  @override
+  int getMinChildIndexForScrollOffset(double scrollOffset) {
+    return scrollOffset ~/ tileHeight;
   }
 }
