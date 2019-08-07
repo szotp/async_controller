@@ -7,14 +7,16 @@ import 'helpers.dart';
 
 /// Utility to mock paged data loading with various situations.
 class FakePageDataProvider extends PagedAsyncController<String> {
+  FakePageDataProvider(this.totalCount, {this.errorChance = 0}) : super(5);
+
+  @override
   final int totalCount;
   final int errorChance;
 
-  FakePageDataProvider(this.totalCount, {this.errorChance = 0}) : super(5);
-
+  @override
   Future<PagedData<String>> fetchPage(int pageIndex) async {
     final index = pageSize * pageIndex;
-    await Future.delayed(Duration(milliseconds: 500));
+    await Future<void>.delayed(Duration(milliseconds: 500));
 
     if (errorChance > Random().nextInt(100)) {
       throw 'Random failure';

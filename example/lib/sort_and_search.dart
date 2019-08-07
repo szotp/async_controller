@@ -9,14 +9,14 @@ enum Sorting { ascending, descending }
 class SearchingController extends FilteringAsyncController<String> {
   @override
   Future<List<String>> fetchBase() async {
-    await Future.delayed(Duration(seconds: 1));
-    final faker = Faker();
+    await Future<void>.delayed(Duration(seconds: 1));
+    const faker = Faker();
     return List.generate(100, (_) => faker.person.name());
   }
 
   @override
   Future<List<String>> transform(List<String> data) async {
-    var result = data.toList();
+    final result = data.toList();
 
     // apply searching
     if (_searchText?.isNotEmpty == true) {
@@ -114,7 +114,7 @@ class _SortAndSearchPageState extends State<SortAndSearchPage> {
                     },
                   );
                 },
-                decorator: PagedListDecoration(noDataContent: Text('I found nothing...'))),
+                decorator: const PagedListDecoration(noDataContent: Text('I found nothing...'))),
           ),
         ],
       ),

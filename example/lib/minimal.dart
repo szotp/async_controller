@@ -20,7 +20,7 @@ class MinimalExample extends StatelessWidget with ExamplePage {
 /// Because this controller has been created as static global property, it will keep the data for entire life of the app.
 /// Typically it is better to create it inside StatefulWidget's state to ensure that data is delete after user logged out.
 final _controller = AsyncController<String>.method(() async {
-  await Future.delayed(Duration(seconds: 1));
+  await Future<void>.delayed(Duration(seconds: 1));
   return 'Hello world';
 });
 

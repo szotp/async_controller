@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 class TitledValue<T> {
+  const TitledValue(this.title, this.value);
+
   final String title;
   final T value;
-
-  TitledValue(this.title, this.value);
 }
 
 abstract class ExamplePage implements Widget {
@@ -16,11 +16,11 @@ abstract class ExamplePage implements Widget {
 }
 
 class CasePicker<T> extends StatefulWidget {
+  const CasePicker({Key key, this.builder, this.cases, this.appBar}) : super(key: key);
+
   final AppBar appBar;
   final List<TitledValue<T>> cases;
   final Widget Function(BuildContext context, T item) builder;
-
-  CasePicker({Key key, this.builder, this.cases, this.appBar}) : super(key: key);
 
   @override
   _CasePickerState createState() => _CasePickerState<T>();

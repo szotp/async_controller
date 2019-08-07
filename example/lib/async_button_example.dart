@@ -15,14 +15,14 @@ class _AsyncButtonPageState extends State<AsyncButtonPage> {
   int _counter = 0;
 
   Future<void> success() async {
-    await Future.delayed(Duration(seconds: 1));
+    await Future<void>.delayed(Duration(seconds: 1));
     setState(() {
       _counter++;
     });
   }
 
   Future<void> failure() async {
-    await Future.delayed(Duration(seconds: 1));
+    await Future<void>.delayed(Duration(seconds: 1));
     throw 'Failed';
   }
 
@@ -35,20 +35,20 @@ class _AsyncButtonPageState extends State<AsyncButtonPage> {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Text('Clicks: $_counter'),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             AsyncButton(
-              child: Text('This will work'),
+              child: const Text('This will work'),
               onPressed: success,
               builder: buttonStyleOne,
             ),
             AsyncButton(
-              child: Text('This will fail'),
+              child: const Text('This will fail'),
               onPressed: failure,
               builder: buttonStyleTwo,
               loadingColor: Colors.white,
             ),
             AsyncButton(
-              child: Text('This will not lock interface'),
+              child: const Text('This will not lock interface'),
               onPressed: success,
               builder: buttonStyleOne,
               lockInterface: false,

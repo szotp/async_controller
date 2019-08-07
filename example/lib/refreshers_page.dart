@@ -24,7 +24,7 @@ class _RefreshersPageState extends State<RefreshersPage> {
     );
 
   final controllerC = AsyncController<DateTime>.method(() async {
-    await Future.delayed(Duration(seconds: 3));
+    await Future<void>.delayed(Duration(seconds: 3));
     throw 'Failed';
   })
     ..addRefresher(

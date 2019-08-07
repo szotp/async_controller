@@ -8,8 +8,9 @@ import 'helpers.dart';
 class _HugeListController extends PagedAsyncController<String> {
   _HugeListController() : super(10);
 
+  @override
   Future<PagedData<String>> fetchPage(int pageIndex) async {
-    await Future.delayed(Duration(milliseconds: 500));
+    await Future<void>.delayed(Duration(milliseconds: 500));
     final data = List.generate(pageSize, (i) => 'Item ${i + pageIndex * pageSize}');
     return PagedData(pageIndex, null, data);
   }
@@ -27,11 +28,6 @@ class _HugeListPageState extends State<HugeListPage> {
   final _controller = _HugeListController();
   final _scrollController = ScrollController(initialScrollOffset: tileHeight * 10000000);
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
   static const tileHeight = 50.0;
 
   @override
@@ -44,14 +40,14 @@ class _HugeListPageState extends State<HugeListPage> {
         // If you don't need jumping functionality, consider using PagedListView
         return GridView.builder(
           controller: _scrollController,
-          gridDelegate: ConstTileHeightGridDelegate(tileHeight),
+          gridDelegate: const ConstTileHeightGridDelegate(tileHeight),
           itemBuilder: (context, i) {
             final item = _controller.getItem(i);
 
             if (item != null) {
               return Text(item.toString());
             } else {
-              return Text('Loading...');
+              return const Text('Loading...');
             }
           },
         );
@@ -61,10 +57,9 @@ class _HugeListPageState extends State<HugeListPage> {
 }
 
 class ConstTileHeightGridDelegate extends SliverGridDelegate {
-  final tileHeight;
-  SliverConstraints constraints;
+  const ConstTileHeightGridDelegate(this.tileHeight);
 
-  ConstTileHeightGridDelegate(this.tileHeight);
+  final double tileHeight;
 
   @override
   SliverGridLayout getLayout(SliverConstraints constraints) {
@@ -78,10 +73,10 @@ class ConstTileHeightGridDelegate extends SliverGridDelegate {
 }
 
 class ConstTileHeightGridLayout extends SliverGridLayout {
-  final width;
-  final tileHeight;
+  const ConstTileHeightGridLayout(this.width, this.tileHeight);
 
-  ConstTileHeightGridLayout(this.width, this.tileHeight);
+  final double width;
+  final double tileHeight;
 
   @override
   double computeMaxScrollOffset(int childCount) {

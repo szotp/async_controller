@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 Future<List<String>> fetch() async {
-  await Future.delayed(Duration(seconds: 1));
+  await Future<void>.delayed(Duration(seconds: 1));
   final date = DateTime.now();
   final format = DateFormat.Hms();
   return [format.format(date), 'Hello', 'World'];

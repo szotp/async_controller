@@ -12,7 +12,7 @@ class FailureHandlingPage extends StatefulWidget with ExamplePage {
 
 class _FailureHandlingPageState extends State<FailureHandlingPage> {
   final _controller = AsyncController<int>.method(() async {
-    await Future.delayed(Duration(seconds: 1));
+    await Future<void>.delayed(Duration(seconds: 1));
     throw 'Sorry, loading failed.';
   });
 
@@ -21,7 +21,7 @@ class _FailureHandlingPageState extends State<FailureHandlingPage> {
     return Scaffold(
       appBar: widget.buildAppBar(),
       body: _controller.buildAsyncData(builder: (_, data) {
-        return Text('OK');
+        return const Text('OK');
       }),
     );
   }

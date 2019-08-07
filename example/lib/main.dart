@@ -43,7 +43,7 @@ Future<List<int>> collect() async {
   while (true) {
     final got = await stream.take(1);
     print('got');
-    if (got.length == 0) {
+    if (got.isEmpty) {
       break;
     }
   }
@@ -78,7 +78,7 @@ class ExampleSwitcher extends StatelessWidget {
           return ListTile(
             title: Text(example.title),
             onTap: () {
-              final route = MaterialPageRoute(builder: (context) => examples[i]);
+              final route = MaterialPageRoute<void>(builder: (context) => examples[i]);
               Navigator.of(context).push(route);
             },
           );
