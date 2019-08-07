@@ -138,7 +138,7 @@ class PagedListLoadMoreTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final builder = AsyncData.of(context);
     final PagedAsyncController controller = builder.controller;
-    final decorator = builder.decorator;
+    final decorator = builder.widget.decorator;
 
     return controller.buildAsyncProperty<bool>(
       selector: () => controller.error != null && !controller.isLoading,

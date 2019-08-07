@@ -50,6 +50,8 @@ abstract class LoadingValueListenable<T> implements ValueListenable<T>, Refresha
   @override
   Future<void> refresh();
 
+  void dispose();
+
   AsyncData<T> buildAsyncData({
     @required AsyncDataFunction<T> builder,
     AsyncDataDecoration decorator = const AsyncDataDecoration(),

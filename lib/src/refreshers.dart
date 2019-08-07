@@ -24,34 +24,47 @@ class InForegroundRefresher extends LoadingRefresher with WidgetsBindingObserver
   }
 }
 
-class OnReconnectedRefresher extends LoadingRefresher {
-  OnReconnectedRefresher([this.alwaysRefresh = false]);
+class StreamRefresher<T> extends LoadingRefresher {
+  StreamRefresher(this.stream);
 
-  final bool alwaysRefresh;
-
-  StreamSubscription _sub;
-  bool _wasConnected = false;
+  final Stream<T> stream;
+  StreamSubscription<T> _sub;
 
   @override
   void activate() {
-    _sub = Connectivity().onConnectivityChanged.listen(_onData);
+    _sub = stream.listen(_onData);
   }
 
-  void _onData(ConnectivityResult state) {
-    final isConnected = state != ConnectivityResult.none;
-    if (isConnected != _wasConnected) {
-      _wasConnected = isConnected;
+  bool shouldRefresh(T data) => true;
 
-      if (alwaysRefresh || controller.error != null) {
-        controller.setNeedsRefresh();
-      }
+  void _onData(T data) {
+    if (shouldRefresh(data)) {
+      controller.setNeedsRefresh();
     }
   }
 
   @override
   void deactivate() {
     _sub.cancel();
-    _sub = null;
+  }
+}
+
+class OnReconnectedRefresher extends StreamRefresher<ConnectivityResult> {
+  OnReconnectedRefresher([this.alwaysRefresh = false]) : super(Connectivity().onConnectivityChanged);
+
+  // If false, it will refresh only if controller is in error state.
+  final bool alwaysRefresh;
+  bool _wasConnected = false;
+
+  @override
+  bool shouldRefresh(ConnectivityResult data) {
+    final isConnected = data != ConnectivityResult.none;
+    if (isConnected != _wasConnected) {
+      _wasConnected = isConnected;
+      return alwaysRefresh || controller.error != null;
+    } else {
+      return false;
+    }
   }
 }
 

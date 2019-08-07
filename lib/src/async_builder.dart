@@ -10,17 +10,41 @@ typedef AsyncDataFunction<T> = Widget Function(BuildContext context, T data);
 /// Error handling, empty state and loading are handled by the widget.
 /// The automatic handling is customizable with AsyncDataDecoration.
 class AsyncData<T> extends StatefulWidget {
+  /// Creates AsyncData with already existing controller.
   const AsyncData({
     Key key,
     @required this.controller,
     @required this.builder,
     this.decorator = const AsyncDataDecoration(),
-  }) : super(key: key);
+  })  : setup = null,
+        super(key: key);
+
+  /// Creates AsyncData with setup method that will create the controller and dispose it when needed.
+  const AsyncData.setup({
+    Key key,
+    @required this.setup,
+    @required this.builder,
+    this.decorator = const AsyncDataDecoration(),
+  })  : controller = null,
+        super(key: key);
+
+  /// Creates simple AsyncData, constructing LoadingController with provided fetch and refreshers.
+  AsyncData.method({
+    Key key,
+    @required AsyncControllerFetch<T> fetch,
+    List<LoadingRefresher> refreshers,
+    @required this.builder,
+    this.decorator = const AsyncDataDecoration(),
+  })  : controller = null,
+        setup = _fromFetch(fetch, refreshers),
+        super(key: key);
 
   /// Source of data and changes.
+  final LoadingValueListenable<T> Function() setup;
+
   final LoadingValueListenable<T> controller;
 
-  /// This builder runs only when data is not null.
+  /// This builder runs only when data is available.
   final AsyncDataFunction<T> builder;
 
   /// Provides widgets for AsyncData when there is no data to show.
@@ -29,34 +53,36 @@ class AsyncData<T> extends StatefulWidget {
   @override
   _AsyncDataState createState() => _AsyncDataState<T>();
 
-  static AsyncData of(BuildContext context) {
+  static _AsyncDataState of(BuildContext context) {
     final state = context.ancestorStateOfType(const TypeMatcher<_AsyncDataState>());
-    return state.widget;
+    return state;
   }
 }
 
 class _AsyncDataState<T> extends State<AsyncData<T>> {
   int _version;
+  LoadingValueListenable<T> _controller;
+  LoadingValueListenable<T> get controller => _controller;
 
   @override
-  void initState() {
-    super.initState();
-    widget.controller.addListener(_handleChange);
-  }
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
-  @override
-  void didUpdateWidget(AsyncData<T> oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.controller != oldWidget.controller) {
-      oldWidget.controller.removeListener(_handleChange);
-      widget.controller.addListener(_handleChange);
-      _version = null;
+    final newController = widget.controller ?? widget.setup();
+
+    if (newController != _controller) {
+      _controller?.removeListener(_handleChange);
+      _controller = newController;
+      _controller.addListener(_handleChange);
     }
   }
 
   @override
   void dispose() {
-    widget.controller.removeListener(_handleChange);
+    _controller.removeListener(_handleChange);
+    if (widget.controller == null) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -137,4 +163,12 @@ class _CustomizedAsyncDataDecoration extends AsyncDataDecoration {
   Widget buildNoData(BuildContext context) {
     return customNoData;
   }
+}
+
+LoadingValueListenable<T> Function() _fromFetch<T>(AsyncControllerFetch<T> fetch, List<LoadingRefresher> refreshers) {
+  return () {
+    final result = AsyncController.method(fetch);
+    refreshers.forEach(result.addRefresher);
+    return result;
+  };
 }
