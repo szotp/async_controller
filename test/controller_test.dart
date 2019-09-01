@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -9,16 +10,16 @@ class Controller extends AsyncController<int> {
   bool shouldFail = false;
 
   @override
-  Future<int> fetch(AsyncStatus status) {
+  Future<int> fetch(AsyncFetchItem status) async {
     final willFail = shouldFail;
     shouldFail = false;
 
-    return Future.microtask(() {
-      if (willFail) {
-        throw 'failed';
-      }
+    await Future<void>.delayed(Duration.zero);
+    if (willFail) {
+      throw 'failed';
+    } else {
       return counter++;
-    });
+    }
   }
 }
 
@@ -38,12 +39,11 @@ class Recorder<T> {
 
   void onChanged() {
     data.add(input.value);
-    final s = input.snapshot;
+    final s = input.state;
 
-    var name = s.connectionState.toString();
-    name = name.replaceFirst('ConnectionState.', '');
-    name = name.padRight(8);
-    snapshots.add('$name: ${s.data ?? s.error}');
+    var name = describeEnum(s);
+    name = name.padRight(10);
+    snapshots.add('$name: ${input.value ?? input.error}');
   }
 }
 
@@ -51,7 +51,7 @@ void main() {
   test('test initial conditions', () {
     final loader = Controller();
     expect(loader.value, null);
-    expect(loader.snapshot, const AsyncSnapshot<int>.nothing());
+    expect(loader.snapshot, const AsyncSnapshot<int>.nothing().inState(ConnectionState.waiting));
   });
 
   test('test loads on listener', () {
@@ -60,11 +60,12 @@ void main() {
     expect(loader.snapshot, const AsyncSnapshot<int>.nothing().inState(ConnectionState.waiting));
   });
 
-  test('test loads on listener and finishes', () async {
+  test('test loads on listeners', () async {
     final loader = Controller();
+
+    expect(loader.isLoading, isFalse);
     loader.addListener(() {});
-    await Future<void>.value();
-    expect(loader.snapshot, const AsyncSnapshot<int>.withData(ConnectionState.done, 1));
+    expect(loader.isLoading, isTrue);
   });
 
   test('test loadIfNeeded once', () async {
@@ -85,8 +86,8 @@ void main() {
     await Future.wait([f1, f2, f3]);
     expect(loader.value, 4);
     expect(recorder.snapshots, [
-      'waiting : null',
-      'done    : 4',
+      'noDataYet : null',
+      'hasData   : 4',
     ]);
   });
 
@@ -95,11 +96,12 @@ void main() {
     final recorder = Recorder(loader);
     await loader.loadIfNeeded();
     await loader.refresh();
+
     expect(recorder.snapshots, [
-      'waiting : null',
-      'done    : 1',
-      'waiting : 1',
-      'done    : 2',
+      'noDataYet : null',
+      'hasData   : 1',
+      'hasData   : 1',
+      'hasData   : 2',
     ]);
   });
 
@@ -110,10 +112,54 @@ void main() {
     await loader.loadIfNeeded();
     await loader.refresh();
     expect(recorder.snapshots, [
-      'waiting : null',
-      'done    : failed',
-      'waiting : null',
-      'done    : 1',
+      'noDataYet : null',
+      'failed    : failed',
+      'noDataYet : failed',
+      'hasData   : 1',
     ]);
+  });
+
+  test('test reset', () async {
+    final loader = Controller();
+    final recorder = Recorder(loader);
+    await loader.loadIfNeeded();
+    await loader.reset();
+
+    expect(recorder.snapshots, [
+      'noDataYet : null',
+      'hasData   : 1',
+      'noDataYet : null',
+      'hasData   : 2',
+    ]);
+  });
+
+  test('test multiple loadIfNeeded', () async {
+    final loader = Controller();
+    final recorder = Recorder(loader);
+    loader.loadIfNeeded();
+    loader.loadIfNeeded();
+    loader.loadIfNeeded();
+    await loader.loadIfNeeded();
+
+    expect(recorder.snapshots, [
+      'noDataYet : null',
+      'hasData   : 1',
+    ]);
+  });
+
+  test('test instant success', () async {
+    final loader = AsyncController<int>.method(() async => 1);
+    loader.addListener(() {});
+    await Future.microtask(() {});
+    expect(loader.value, 1);
+    expect(loader.state, AsyncControllerState.hasData);
+  });
+
+  test('test instant failure', () async {
+    final loader = AsyncController<int>.method(() async => throw 'failed');
+    loader.addListener(() {});
+    await Future.microtask(() {});
+    expect(loader.error, 'failed');
+    expect(loader.state, AsyncControllerState.failed);
   });
 }

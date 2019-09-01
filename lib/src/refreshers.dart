@@ -3,7 +3,24 @@ import 'dart:async';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/widgets.dart';
 
-import 'controller.dart';
+enum SetNeedsRefreshFlag { always, ifError, reset }
+
+abstract class Refreshable {
+  void setNeedsRefresh(SetNeedsRefreshFlag flag);
+}
+
+abstract class LoadingRefresher {
+  Refreshable _controller;
+
+  Refreshable get controller => _controller;
+
+  void mount(Refreshable controller) {
+    _controller = controller;
+  }
+
+  void activate();
+  void deactivate();
+}
 
 class InForegroundRefresher extends LoadingRefresher with WidgetsBindingObserver {
   @override
@@ -14,7 +31,7 @@ class InForegroundRefresher extends LoadingRefresher with WidgetsBindingObserver
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      controller.setNeedsRefresh();
+      controller.setNeedsRefresh(SetNeedsRefreshFlag.always);
     }
   }
 
@@ -35,11 +52,12 @@ class StreamRefresher<T> extends LoadingRefresher {
     _sub = stream.listen(_onData);
   }
 
-  bool shouldRefresh(T data) => true;
+  SetNeedsRefreshFlag shouldRefresh(T data) => SetNeedsRefreshFlag.always;
 
   void _onData(T data) {
-    if (shouldRefresh(data)) {
-      controller.setNeedsRefresh();
+    final flag = shouldRefresh(data);
+    if (flag != null) {
+      controller.setNeedsRefresh(flag);
     }
   }
 
@@ -50,20 +68,19 @@ class StreamRefresher<T> extends LoadingRefresher {
 }
 
 class OnReconnectedRefresher extends StreamRefresher<ConnectivityResult> {
-  OnReconnectedRefresher([this.alwaysRefresh = false]) : super(Connectivity().onConnectivityChanged);
+  OnReconnectedRefresher([this.flag = SetNeedsRefreshFlag.ifError]) : super(Connectivity().onConnectivityChanged);
 
-  // If false, it will refresh only if controller is in error state.
-  final bool alwaysRefresh;
+  final SetNeedsRefreshFlag flag;
   bool _wasConnected = false;
 
   @override
-  bool shouldRefresh(ConnectivityResult data) {
+  SetNeedsRefreshFlag shouldRefresh(ConnectivityResult data) {
     final isConnected = data != ConnectivityResult.none;
     if (isConnected != _wasConnected) {
       _wasConnected = isConnected;
-      return alwaysRefresh || controller.error != null;
+      return flag;
     } else {
-      return false;
+      return null;
     }
   }
 }
@@ -77,7 +94,7 @@ class PeriodicRefresher extends LoadingRefresher {
   Timer _timer;
 
   void onTick(Timer timer) {
-    controller.setNeedsRefresh();
+    controller.setNeedsRefresh(SetNeedsRefreshFlag.always);
   }
 
   @override
@@ -91,8 +108,8 @@ class PeriodicRefresher extends LoadingRefresher {
   }
 }
 
-class ListenerRefresher extends LoadingRefresher {
-  ListenerRefresher(this.listenable);
+class ListeningRefresher extends LoadingRefresher {
+  ListeningRefresher(this.listenable);
 
   final Listenable listenable;
 
@@ -107,6 +124,6 @@ class ListenerRefresher extends LoadingRefresher {
   }
 
   void onChange() {
-    controller.setNeedsRefresh();
+    controller.setNeedsRefresh(SetNeedsRefreshFlag.always);
   }
 }

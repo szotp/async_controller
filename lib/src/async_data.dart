@@ -16,31 +16,7 @@ class AsyncData<T> extends StatefulWidget {
     @required this.controller,
     @required this.builder,
     this.decorator = const AsyncDataDecoration(),
-  })  : setup = null,
-        super(key: key);
-
-  /// Creates AsyncData with setup method that will create the controller and dispose it when needed.
-  const AsyncData.setup({
-    Key key,
-    @required this.setup,
-    @required this.builder,
-    this.decorator = const AsyncDataDecoration(),
-  })  : controller = null,
-        super(key: key);
-
-  /// Creates simple AsyncData, constructing LoadingController with provided fetch and refreshers.
-  AsyncData.method({
-    Key key,
-    @required AsyncControllerFetch<T> fetch,
-    List<LoadingRefresher> refreshers,
-    @required this.builder,
-    this.decorator = const AsyncDataDecoration(),
-  })  : controller = null,
-        setup = _fromFetch(fetch, refreshers),
-        super(key: key);
-
-  /// Source of data and changes.
-  final LoadingValueListenable<T> Function() setup;
+  }) : super(key: key);
 
   final LoadingValueListenable<T> controller;
 
@@ -61,28 +37,27 @@ class AsyncData<T> extends StatefulWidget {
 
 class _AsyncDataState<T> extends State<AsyncData<T>> {
   int _version;
-  LoadingValueListenable<T> _controller;
-  LoadingValueListenable<T> get controller => _controller;
+
+  AsyncController<T> get controller => widget.controller;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  void initState() {
+    widget.controller.addListener(_handleChange);
+    super.initState();
+  }
 
-    final newController = widget.controller ?? widget.setup();
-
-    if (newController != _controller) {
-      _controller?.removeListener(_handleChange);
-      _controller = newController;
-      _controller.addListener(_handleChange);
+  @override
+  void didUpdateWidget(AsyncData<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_handleChange);
+      widget.controller.addListener(_handleChange);
     }
   }
 
   @override
   void dispose() {
-    _controller.removeListener(_handleChange);
-    if (widget.controller == null) {
-      controller.dispose();
-    }
+    widget.controller.removeListener(_handleChange);
     super.dispose();
   }
 
@@ -100,15 +75,19 @@ class _AsyncDataState<T> extends State<AsyncData<T>> {
     _version = widget.controller.version;
 
     Widget buildContent() {
-      if (widget.controller.hasData) {
-        return widget.builder(context, widget.controller.value);
-      } else if (widget.controller.error != null && !widget.controller.isLoading) {
-        return widget.decorator.buildError(context, widget.controller.error, widget.controller.refresh);
-      } else if (widget.controller.version == 0) {
-        return widget.decorator.buildNoDataYet(context);
-      } else {
-        return widget.decorator.buildNoData(context);
+      switch (widget.controller.state) {
+        case AsyncControllerState.hasData:
+          return widget.builder(context, widget.controller.value);
+        case AsyncControllerState.failed:
+          return widget.decorator.buildError(context, widget.controller.error, widget.controller.refresh);
+        case AsyncControllerState.noDataYet:
+          return widget.decorator.buildNoDataYet(context);
+        case AsyncControllerState.noData:
+          return widget.decorator.buildNoData(context);
       }
+
+      assert(false, 'Unknown state');
+      return widget.decorator.buildNoData(context);
     }
 
     final child = buildContent();
@@ -163,12 +142,4 @@ class _CustomizedAsyncDataDecoration extends AsyncDataDecoration {
   Widget buildNoData(BuildContext context) {
     return customNoData;
   }
-}
-
-LoadingValueListenable<T> Function() _fromFetch<T>(AsyncControllerFetch<T> fetch, List<LoadingRefresher> refreshers) {
-  return () {
-    final result = AsyncController.method(fetch);
-    refreshers.forEach(result.addRefresher);
-    return result;
-  };
 }

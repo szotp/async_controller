@@ -16,18 +16,17 @@ class TranslatorPage extends StatefulWidget with ExamplePage {
 class TranslatorController extends AsyncController<String> {
   final _service = GoogleTranslator();
 
-  @override
   Duration get delayToRefresh => Duration(seconds: 1);
 
   String _input;
 
   void setInput(String newValue) {
     _input = newValue;
-    setNeedsRefresh();
+    setNeedsRefresh(SetNeedsRefreshFlag.always);
   }
 
   @override
-  Future<String> fetch(AsyncStatus status) {
+  Future<String> fetch(AsyncFetchItem status) {
     if (_input == null || _input.length < 3) {
       return Future.value();
     }
@@ -57,7 +56,7 @@ class _TranslatorPageState extends State<TranslatorPage> {
             ),
             SizedBox(height: 16),
             _data.buildAsyncOpacity(
-              selector: () => _data.hasFreshData,
+              selector: () => false,
               child: _data.buildAsyncData(
                 builder: (_, output) {
                   return Text(

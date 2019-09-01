@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-import 'async_builder.dart';
+import 'async_data.dart';
 import 'controller.dart';
 
 /// A slice of bigger array, returned from backend. All values must not be null.
@@ -32,7 +32,7 @@ abstract class PagedAsyncController<T> extends AsyncController<int> {
 
   Future<PagedData<T>> fetchPage(int pageIndex);
 
-  Future<int> _fetchPage(int pageIndex, AsyncStatus status) async {
+  Future<int> _fetchPage(int pageIndex, AsyncFetchItem status) async {
     try {
       final page = await fetchPage(pageIndex);
       if (!status.isCancelled) {
@@ -47,15 +47,15 @@ abstract class PagedAsyncController<T> extends AsyncController<int> {
   }
 
   @override
-  Future<int> fetch(AsyncStatus status) async {
+  Future<int> fetch(AsyncFetchItem status) async {
     return _fetchPage(0, status);
   }
 
   @override
-  void reset() {
+  Future<void> reset() {
     _loadedItemsCount = 0;
     _cache.clear();
-    super.reset();
+    return super.reset();
   }
 
   @override

@@ -1,23 +1,24 @@
 # async_controller
 
-A library for managing asynchronously loaded data in Flutter.
+A library for managing asynchronously loaded data in Flutter. It handles loading indicator, error handling, and refreshing, in few lines of code.
 
 ```dart
 final _controller = AsyncController<String>.method(() async {
-  await Future.delayed(Duration(seconds: 1));
+  await Future<void>.delayed(Duration(seconds: 1));
   return 'Hello world';
 });
 
 class Minimal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return _controller.buildAsync(builder: (_, data) {
+    return _controller.buildAsyncData(builder: (_, data) {
       // This builder runs only if data is available.
       // buildAsync takes care of other situations
       return Text(data);
     });
   }
 }
+
 ```
 
 ### How is this better than a FutureBuilder?
