@@ -22,7 +22,6 @@ void main() {
     expect(recorder.snapshots, [
       'noDataYet : null',
       'hasData   : 1',
-      'hasData   : 1',
       'hasData   : 2',
     ]);
   });

@@ -5,14 +5,6 @@ import 'package:example/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:translator/translator.dart';
 
-class TranslatorPage extends StatefulWidget with ExamplePage {
-  @override
-  String get title => 'translator';
-
-  @override
-  _TranslatorPageState createState() => _TranslatorPageState();
-}
-
 class TranslatorController extends AsyncController<String> {
   final _service = GoogleTranslator();
 
@@ -46,6 +38,14 @@ class TranslatorController extends AsyncController<String> {
       notifyListeners();
     }
   }
+}
+
+class TranslatorPage extends StatefulWidget with ExamplePage {
+  @override
+  String get title => 'translator';
+
+  @override
+  _TranslatorPageState createState() => _TranslatorPageState();
 }
 
 class _TranslatorPageState extends State<TranslatorPage> {

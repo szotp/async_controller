@@ -1,51 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:async_controller/async_controller.dart';
 
-class Controller extends AsyncController<int> {
-  int counter = 1;
-
-  bool shouldFail = false;
-
-  @override
-  Future<int> fetch(AsyncFetchItem status) async {
-    final willFail = shouldFail;
-    shouldFail = false;
-
-    await Future<void>.delayed(Duration.zero);
-    if (willFail) {
-      throw 'failed';
-    } else {
-      return counter++;
-    }
-  }
-}
-
-class Recorder<T> {
-  Recorder(this.input) {
-    input.addListener(onChanged);
-    onChanged();
-  }
-
-  final AsyncController<T> input;
-  final data = <T>[];
-  final snapshots = <String>[];
-
-  void dispose() {
-    input.removeListener(onChanged);
-  }
-
-  void onChanged() {
-    data.add(input.value);
-    final s = input.state;
-
-    var name = describeEnum(s);
-    name = name.padRight(10);
-    snapshots.add('$name: ${input.value ?? input.error}');
-  }
-}
+import 'utils.dart';
 
 void main() {
   test('test initial conditions', () {
@@ -80,9 +38,9 @@ void main() {
   test('test refresh works multiple times', () async {
     final loader = Controller();
     final recorder = Recorder(loader);
-    final f1 = loader.refresh();
-    final f2 = loader.refresh();
-    final f3 = loader.refresh();
+    final f1 = loader.performUserInitiatedRefresh();
+    final f2 = loader.performUserInitiatedRefresh();
+    final f3 = loader.performUserInitiatedRefresh();
     await Future.wait([f1, f2, f3]);
     expect(loader.value, 4);
     expect(recorder.snapshots, [
@@ -95,11 +53,10 @@ void main() {
     final loader = Controller();
     final recorder = Recorder(loader);
     await loader.loadIfNeeded();
-    await loader.refresh();
+    await loader.performUserInitiatedRefresh();
 
     expect(recorder.snapshots, [
       'noDataYet : null',
-      'hasData   : 1',
       'hasData   : 1',
       'hasData   : 2',
     ]);
@@ -110,7 +67,7 @@ void main() {
     loader.shouldFail = true;
     final recorder = Recorder(loader);
     await loader.loadIfNeeded();
-    await loader.refresh();
+    await loader.performUserInitiatedRefresh();
     expect(recorder.snapshots, [
       'noDataYet : null',
       'failed    : failed',

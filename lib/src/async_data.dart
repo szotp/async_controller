@@ -79,7 +79,7 @@ class _AsyncDataState<T> extends State<AsyncData<T>> {
         case AsyncControllerState.hasData:
           return widget.builder(context, widget.controller.value);
         case AsyncControllerState.failed:
-          return widget.decorator.buildError(context, widget.controller.error, widget.controller.refresh);
+          return widget.decorator.buildError(context, widget.controller.error, widget.controller.performUserInitiatedRefresh);
         case AsyncControllerState.noDataYet:
           return widget.decorator.buildNoDataYet(context);
         case AsyncControllerState.noData:

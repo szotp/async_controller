@@ -68,6 +68,13 @@ class Recorder<T> {
 
     var name = describeEnum(s);
     name = name.padRight(10);
-    snapshots.add('$name: ${input.value ?? input.error}');
+
+    final snapshot = '$name: ${input.value ?? input.error}';
+
+    if (snapshots.isNotEmpty && snapshots.last == snapshot) {
+      return;
+    }
+
+    snapshots.add(snapshot);
   }
 }

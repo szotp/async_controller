@@ -196,7 +196,7 @@ class PagedListDecoration extends AsyncDataDecoration {
   Widget decorate(Widget child, AsyncData builder) {
     if (addRefreshIndicator) {
       return RefreshIndicator(
-        onRefresh: builder.controller.refresh,
+        onRefresh: builder.controller.performUserInitiatedRefresh,
         child: child,
       );
     } else {

@@ -35,7 +35,7 @@ class _PullToRefreshPageState extends State<PullToRefreshPage> {
           Expanded(
             child: RefreshIndicator(
               /// Calling controller.refresh in RefreshIndicator is all you need to implement pull to refresh
-              onRefresh: controller.refresh,
+              onRefresh: controller.performUserInitiatedRefresh,
               child: AsyncData<List<String>>(
                 controller: controller,
                 builder: (context, data) {

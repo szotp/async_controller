@@ -61,7 +61,8 @@ abstract class LoadingValueListenable<T> implements ValueListenable<T>, Refresha
   bool get isLoading;
   Object get error;
 
-  Future<void> refresh();
+  /// Method usually used to execute pull to refresh.
+  Future<void> performUserInitiatedRefresh();
 
   void dispose();
 
@@ -74,6 +75,18 @@ abstract class LoadingValueListenable<T> implements ValueListenable<T>, Refresha
       return AsyncControllerState.noDataYet;
     } else {
       return AsyncControllerState.noData;
+    }
+  }
+
+  /// Provides AsyncSnapshot for compability with other widgets.
+  /// It is usually better to use state property.
+  AsyncSnapshot<T> get snapshot {
+    if (version > 0) {
+      return AsyncSnapshot.withData(ConnectionState.done, value);
+    } else if (error != null) {
+      return AsyncSnapshot.withError(ConnectionState.done, error);
+    } else {
+      return const AsyncSnapshot.withData(ConnectionState.waiting, null);
     }
   }
 
@@ -153,19 +166,6 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
   /// Behaviors dictate when loading controller needs to reload.
   final List<LoadingRefresher> _behaviors = [];
 
-  /// AsyncController can contain value, error and be loading at the same time.
-  /// This property simplifies things by using value if it exists, ignoring the error or loading
-  /// This is good default behavior - if pull to refresh fails we don't want to loose older data
-  AsyncSnapshot<T> get snapshot {
-    if (_version > 0) {
-      return AsyncSnapshot.withData(ConnectionState.done, _value);
-    } else if (_error != null) {
-      return AsyncSnapshot.withError(ConnectionState.done, _error);
-    } else {
-      return const AsyncSnapshot.withData(ConnectionState.waiting, null);
-    }
-  }
-
   @override
   T get value => _value;
 
@@ -191,7 +191,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
 
     _cancelCurrentFetch();
     if (hasListeners) {
-      refresh();
+      internallyLoadAndNotify();
     }
   }
 
@@ -200,6 +200,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
     _lastFetch = nextFetch;
   }
 
+  /// Clears all stored data. Will fetch again if controller has listeners.
   Future<void> reset() {
     _version = 0;
     _cancelCurrentFetch();
@@ -208,12 +209,13 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
     _isLoading = false;
 
     if (hasListeners) {
-      return loadIfNeeded();
+      return internallyLoadAndNotify();
     } else {
       return Future<void>.value();
     }
   }
 
+  /// Indicates if controller has data that could be displayed.
   @override
   bool get hasData => _value != null;
 
@@ -232,12 +234,8 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
       if (!_isLoading) {
         _isLoading = true;
 
-        if (hasListeners) {
-          final _ = Future.microtask(() {
-            // this avoids crash when calling load from the build method
-            notifyListeners();
-          });
-        }
+        // microtask avoids crash that would happen when executing loadIfNeeded from build method
+        Future.microtask(notifyListeners);
       }
 
       final method = fetch ?? this.fetch;
@@ -262,7 +260,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
   }
 
   @override
-  Future<void> refresh() {
+  Future<void> performUserInitiatedRefresh() {
     return internallyLoadAndNotify();
   }
 
@@ -276,6 +274,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
     return _lastFetch._runningFuture;
   }
 
+  /// Adds loading refresher that will have capability to trigger a reload of controller.
   void addRefresher(LoadingRefresher behavior) {
     behavior.mount(this);
     _behaviors.add(behavior);
@@ -358,14 +357,15 @@ abstract class MappedAsyncController<BaseValue, MappedValue> extends AsyncContro
   }
 
   @override
-  void setNeedsRefresh(SetNeedsRefreshFlag flags) {
+  Future<void> performUserInitiatedRefresh() {
     _cachedBase = null;
-    super.setNeedsRefresh(flags);
+    return super.performUserInitiatedRefresh();
   }
 
+  /// Re-run fetch on existing cached base
   @protected
   void setNeedsLocalTransform() {
-    super.setNeedsRefresh(SetNeedsRefreshFlag.always);
+    internallyLoadAndNotify();
   }
 }
 
