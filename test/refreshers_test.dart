@@ -12,7 +12,7 @@ void main() {
     final notifier = ChangeNotifier();
 
     final loader = Controller();
-    final recorder = Recorder(loader);
+    final recorder = loader.r;
     loader.addRefresher(ListeningRefresher(notifier));
 
     await loader.loadIfNeeded();
@@ -56,6 +56,34 @@ void main() {
       recorder.dispose();
       expect(fake.isActive, false);
     });
+  });
+
+  test('test ifError ignored', () async {
+    final loader = await Controller.withData();
+
+    loader.setNeedsRefresh(SetNeedsRefreshFlag.ifError);
+    await loader.pump();
+    expect(loader.r.snapshots, <String>[]);
+  });
+
+  test('test ifError not ignored', () async {
+    final loader = await Controller.failed();
+
+    loader.setNeedsRefresh(SetNeedsRefreshFlag.ifError);
+    await Future.microtask(() {});
+    expect(loader.r.snapshots, <String>[
+      'noDataYet : failed',
+    ]);
+  });
+
+  test('test reset', () async {
+    final loader = await Controller.withData();
+
+    loader.setNeedsRefresh(SetNeedsRefreshFlag.reset);
+    await loader.pump();
+    expect(loader.r.snapshots, <String>[
+      'noDataYet : null',
+    ]);
   });
 }
 

@@ -13,6 +13,7 @@ class AsyncFetchItem {
   bool _isCancelled = false;
   bool get isCancelled => _isCancelled;
 
+  /// Waits until feature is finished, and then ensures that fetch was not cancelled
   Future<T> ifNotCancelled<T>(Future<T> future) async {
     final result = await future;
     if (isCancelled) {
@@ -105,6 +106,7 @@ abstract class LoadingValueListenable<T> implements ValueListenable<T>, Refresha
       selector: selector,
       listenable: this,
       builder: (_, visible) {
+        print('Visibility $visible');
         return Visibility(
           visible: visible,
           child: child,
@@ -140,7 +142,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
     return _SimpleAsyncController(method);
   }
 
-  /// _version == 0 means that there is no data
+  /// _version == 0 means that there was no fetch yet
   int _version = 0;
   T _value;
   Object _error;
@@ -178,16 +180,29 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
 
   @override
   void setNeedsRefresh(SetNeedsRefreshFlag flags) {
-    _lastFetch = null;
+    if (flags == SetNeedsRefreshFlag.ifError && error == null) {
+      return;
+    }
+
+    if (flags == SetNeedsRefreshFlag.reset) {
+      reset();
+      return;
+    }
+
+    _cancelCurrentFetch();
     if (hasListeners) {
       refresh();
     }
   }
 
+  void _cancelCurrentFetch([AsyncFetchItem nextFetch]) {
+    _lastFetch?._isCancelled = true;
+    _lastFetch = nextFetch;
+  }
+
   Future<void> reset() {
     _version = 0;
-    _lastFetch?._isCancelled = true;
-    _lastFetch = null;
+    _cancelCurrentFetch();
     _value = null;
     _error = null;
     _isLoading = false;
@@ -212,8 +227,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
   @protected
   Future<void> internallyLoadAndNotify([AsyncControllerFetchExpanded<T> fetch]) {
     return AsyncFetchItem.runFetch((status) async {
-      _lastFetch?._isCancelled = true;
-      _lastFetch = status;
+      _cancelCurrentFetch(status);
 
       if (!_isLoading) {
         _isLoading = true;
@@ -229,10 +243,7 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
       final method = fetch ?? this.fetch;
 
       try {
-        final future = method(status);
-        _lastFetch = status;
-
-        final value = await status.ifNotCancelled(future);
+        final value = await status.ifNotCancelled(method(status));
 
         _value = value;
         _version += 1;
@@ -266,7 +277,6 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
   }
 
   void addRefresher(LoadingRefresher behavior) {
-    assert(behavior.controller == null);
     behavior.mount(this);
     _behaviors.add(behavior);
 

@@ -25,12 +25,26 @@ class TranslatorController extends AsyncController<String> {
     setNeedsRefresh(SetNeedsRefreshFlag.always);
   }
 
+  var isTranslating = false;
+
   @override
-  Future<String> fetch(AsyncFetchItem status) {
+  Future<String> fetch(AsyncFetchItem status) async {
     if (_input == null || _input.length < 3) {
       return Future.value();
     }
-    return _service.translate(_input);
+
+    await status.ifNotCancelled(Future<void>.delayed(delayToRefresh));
+
+    try {
+      isTranslating = true;
+      notifyListeners();
+
+      print('Translating $_input...');
+      return await _service.translate(_input);
+    } finally {
+      isTranslating = false;
+      notifyListeners();
+    }
   }
 }
 
@@ -49,14 +63,14 @@ class _TranslatorPageState extends State<TranslatorPage> {
               onChanged: _data.setInput,
               decoration: InputDecoration(
                 suffixIcon: _data.buildAsyncVisibility(
-                  selector: () => _data.isLoading,
+                  selector: () => _data.isTranslating,
                   child: Icon(Icons.timer),
                 ),
               ),
             ),
             SizedBox(height: 16),
             _data.buildAsyncOpacity(
-              selector: () => false,
+              selector: () => !_data.isLoading,
               child: _data.buildAsyncData(
                 builder: (_, output) {
                   return Text(

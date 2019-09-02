@@ -6,6 +6,27 @@ class Controller extends AsyncController<int> {
 
   bool shouldFail = false;
 
+  Recorder<int> _recorder;
+  Recorder<int> get r {
+    _recorder ??= Recorder<int>(this);
+    return _recorder;
+  }
+
+  static Future<Controller> failed() async {
+    final p = Controller();
+    p.shouldFail = true;
+    await p.loadIfNeeded();
+    p.r.erase();
+    return p;
+  }
+
+  static Future<Controller> withData() async {
+    final p = Controller();
+    await p.loadIfNeeded();
+    p.r.erase();
+    return p;
+  }
+
   @override
   Future<int> fetch(AsyncFetchItem status) async {
     final willFail = shouldFail;
@@ -18,6 +39,9 @@ class Controller extends AsyncController<int> {
       return counter++;
     }
   }
+
+  /// Ensures that futures were handled
+  Future<void> pump() => Future.microtask(() {});
 }
 
 class Recorder<T> {
@@ -32,6 +56,10 @@ class Recorder<T> {
 
   void dispose() {
     input.removeListener(onChanged);
+  }
+
+  void erase() {
+    snapshots.clear();
   }
 
   void onChanged() {

@@ -3,7 +3,11 @@ import 'dart:async';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/widgets.dart';
 
-enum SetNeedsRefreshFlag { always, ifError, reset }
+enum SetNeedsRefreshFlag {
+  always,
+  ifError,
+  reset,
+}
 
 abstract class Refreshable {
   void setNeedsRefresh(SetNeedsRefreshFlag flag);
@@ -12,7 +16,9 @@ abstract class Refreshable {
 abstract class LoadingRefresher {
   Refreshable _controller;
 
-  Refreshable get controller => _controller;
+  void setNeedsRefresh(SetNeedsRefreshFlag flag) {
+    _controller?.setNeedsRefresh(flag);
+  }
 
   void mount(Refreshable controller) {
     _controller = controller;
@@ -31,7 +37,7 @@ class InForegroundRefresher extends LoadingRefresher with WidgetsBindingObserver
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      controller.setNeedsRefresh(SetNeedsRefreshFlag.always);
+      setNeedsRefresh(SetNeedsRefreshFlag.always);
     }
   }
 
@@ -57,7 +63,7 @@ class StreamRefresher<T> extends LoadingRefresher {
   void _onData(T data) {
     final flag = shouldRefresh(data);
     if (flag != null) {
-      controller.setNeedsRefresh(flag);
+      setNeedsRefresh(flag);
     }
   }
 
@@ -94,7 +100,7 @@ class PeriodicRefresher extends LoadingRefresher {
   Timer _timer;
 
   void onTick(Timer timer) {
-    controller.setNeedsRefresh(SetNeedsRefreshFlag.always);
+    setNeedsRefresh(SetNeedsRefreshFlag.always);
   }
 
   @override
@@ -124,6 +130,6 @@ class ListeningRefresher extends LoadingRefresher {
   }
 
   void onChange() {
-    controller.setNeedsRefresh(SetNeedsRefreshFlag.always);
+    setNeedsRefresh(SetNeedsRefreshFlag.always);
   }
 }

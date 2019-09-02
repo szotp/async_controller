@@ -5,7 +5,7 @@ author: szotp
 homepage: https://github.com/szotp/async_controller
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: ">=2.2.0 <3.0.0"
 
 dependencies:
   flutter:
