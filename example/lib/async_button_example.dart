@@ -53,6 +53,17 @@ class _AsyncButtonPageState extends State<AsyncButtonPage> {
               builder: buttonStyleOne,
               lockInterface: false,
             ),
+            AsyncButton(
+              // AsyncButtons takes a child like typical button
+              child: const Text('Press me!'),
+              // AsyncButton accepts async onPressed method and handles it
+              onPressed: () => Future.delayed(Duration(seconds: 1)),
+              // Through builder method we can support any kind of button
+              builder: (x) => FlatButton(
+                onPressed: x.onPressed,
+                child: x.child,
+              ),
+            ),
           ],
         ),
       ),

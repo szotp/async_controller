@@ -65,12 +65,13 @@ class AsyncButton extends StatefulWidget {
 
   Widget build(AsyncButtonState state) {
     final settings = AsyncButtonSettings(
-        state.context,
-        Opacity(
-          opacity: state.isLoading ? 0.5 : 1.0,
-          child: child,
-        ),
-        state.onPressed);
+      state.context,
+      Opacity(
+        opacity: state.isLoading ? 0.5 : 1.0,
+        child: child,
+      ),
+      state.onPressed,
+    );
     return Stack(
       children: <Widget>[
         builder(settings),

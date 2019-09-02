@@ -18,35 +18,47 @@ class Minimal extends StatelessWidget {
     });
   }
 }
-
 ```
 
-### How is this better than a FutureBuilder?
+### Pull to refresh
 
-AsyncController automatically handles boring edge cases, letting you focus on the happy path. It provides:
-1. A refresh method that can be combined with RefreshIndicator widget for pull to refresh. No `setState` needed!
-2. A loading spinner when data is loading.
-3. Error widget when something goes wrong, with a 'Try again' button.
-4. Optional and extensible refreshing behaviors:
-  * Refresh data every X seconds.
-  ```dart
-  controller.addRefresher(PeriodicRefresher(Duration(seconds: 3)));
-  ```
+AsynController plays nicely with pull to refresh.
+```dart
+final _controller = createAsyncController();
+RefreshIndicator(
+  onRefresh: _controller.performUserInitiatedRefresh,
+  child: buildContent()
+)
+```
+[pull_to_refresh.dart](example/lib/pull_to_refresh.dart)
 
-  * Refresh after network connection comes back.
-  ```dart
-  controller.addRefresher(OnReconnectedRefresher());
-  ```
+### Loading and error handling
 
-  * Refresh after user resumes the app from background.
-  ```dart
-  controller.addRefresher(InForegroundRefresher());
-  ```
+AsyncController used with `buildAsyncData`, automatically handles loading and error states. There is no need to manually change isLoading flag, or catch. AsyncController will do the right thing by default, while allowing for customizations.
 
-  * Refresh when another ChangeNotifier updates.
-  ```dart
-  controller.addRefresher(ListenerRefresher(listenable));
-  ```
+### Automatic refresh
+
+Every AsyncController can be customized to automatically refresh itself in certain situations.
+
+* Refresh after network connection comes back.
+```dart
+controller.addRefresher(OnReconnectedRefresher());
+```
+
+* Refresh data every X seconds.
+```dart
+controller.addRefresher(PeriodicRefresher(Duration(seconds: 3)));
+```
+
+* Refresh after user resumes the app from background.
+```dart
+controller.addRefresher(InForegroundRefresher());
+```
+
+* Refresh when another ChangeNotifier updates.
+```dart
+controller.addRefresher(ListenerRefresher(listenable));
+```
 
 5. Easy to use customization through AsyncDataDecoration.
 ```dart
@@ -55,13 +67,32 @@ class MyDecoration extends AsyncDataDecoration {
   Widget buildNoDataYet(BuildContext context) => MyProgressIndicator();
 }
 ```
+[refreshers_page.dart](example/lib/refreshers_page.dart)
 
-### Extras
+#### Paginated data
 
-This repository also contains `PagedAsyncController` built on top of `AsyncController`, designed for incrementally loading lists.
+`PagedAsyncController` class, which extends AsyncController, is capable of loading data in pages.
+[paged_loading.dart](example/lib/paged_loading.dart)
 
-Finally, there is `AsyncButton` - a button that can handle async operation, by showing loading indicator when operation is pending, and show snackbar when it fails.
+#### Filtering & searching
 
-### Examples
+AsyncController can be extended to implement filtering & searching. You do this by extending FilteringAsyncController.
+[sort_and_search.dart](example/lib/sort_and_search.dart)
 
-Please check out the example project to see each feature in action.
+#### Async button
+
+This repository provides AsyncButton class - a button which shows loading indicator when pressed, and a snackbar when async operation fails.
+```dart
+AsyncButton(
+  // AsyncButtons takes a child like typical button
+  child: const Text('Press me!'),
+  // AsyncButton accepts async onPressed method and handles it
+  onPressed: () => Future.delayed(Duration(seconds: 1)),
+  // Through builder method we can support any kind of button
+  builder: (x) => FlatButton(
+    onPressed: x.onPressed,
+    child: x.child,
+  ),
+),
+```
+Example: [async_button.dart](example/lib/async_button.dart)
