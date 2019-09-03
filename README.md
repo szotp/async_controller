@@ -20,6 +20,8 @@ class Minimal extends StatelessWidget {
 }
 ```
 
+Example: [minimal.dart](example/lib/minimal.dart)
+
 ### Pull to refresh
 
 AsynController plays nicely with pull to refresh.
@@ -43,6 +45,7 @@ _controller.buildAsyncData(builder: builder: (_, data) {
   return Text(data);
 })
 ```
+Example: [failure_handling.dart](example/lib/failure_handling.dart)
 
 ### Custom loading and error handling
 Loading are error handling widgets are created by AsyncDataDecoration. You may override their behavior by creating custom AsyncDataDecoration.
