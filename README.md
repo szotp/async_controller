@@ -24,17 +24,45 @@ class Minimal extends StatelessWidget {
 
 AsynController plays nicely with pull to refresh.
 ```dart
-final _controller = createAsyncController();
+final _controller = AsyncController.method(fetchSomething);
 RefreshIndicator(
   onRefresh: _controller.performUserInitiatedRefresh,
-  child: buildContent()
+  child: _controller.buildAsyncData(builder: buildContent),
 )
 ```
-[pull_to_refresh.dart](example/lib/pull_to_refresh.dart)
+Example: [pull_to_refresh.dart](example/lib/pull_to_refresh.dart)
 
 ### Loading and error handling
 
 AsyncController used with `buildAsyncData`, automatically handles loading and error states. There is no need to manually change isLoading flag, or catch. AsyncController will do the right thing by default, while allowing for customizations.
+
+```dart
+final _controller = AsyncController.method(() => throw 'error');
+_controller.buildAsyncData(builder: builder: (_, data) {
+  // this function runs only on success
+  return Text(data);
+})
+```
+
+### Custom loading and error handling
+Loading are error handling widgets are created by AsyncDataDecoration. You may override their behavior by creating custom AsyncDataDecoration.
+
+```dart
+class CustomAsyncDataDecoration extends AsyncDataDecoration {
+  @override
+  Widget buildError(BuildContext context, dynamic error, VoidCallback tryAgain) {
+    return Text('Sorry :(');
+  }
+}
+
+final _controller = AsyncController.method(() => throw 'error');
+_controller.buildAsyncData(
+  builder: buildContent,
+  decorator: CustomAsyncDataDecoration(),
+)
+```
+
+Example: [failure_handling_custom.dart](example/lib/failure_handling_custom.dart)
 
 ### Automatic refresh
 
@@ -67,21 +95,27 @@ class MyDecoration extends AsyncDataDecoration {
   Widget buildNoDataYet(BuildContext context) => MyProgressIndicator();
 }
 ```
-[refreshers_page.dart](example/lib/refreshers_page.dart)
+Example: [refreshers_page.dart](example/lib/refreshers_page.dart)
 
 #### Paginated data
 
 `PagedAsyncController` class, which extends AsyncController, is capable of loading data in pages.
-[paged_loading.dart](example/lib/paged_loading.dart)
+Example: [paged_loading.dart](example/lib/paged_loading.dart)
 
 #### Filtering & searching
 
 AsyncController can be extended to implement filtering & searching. You do this by extending FilteringAsyncController.
-[sort_and_search.dart](example/lib/sort_and_search.dart)
+Example: [sort_and_search.dart](example/lib/sort_and_search.dart)
 
 #### Async button
 
-This repository provides AsyncButton class - a button which shows loading indicator when pressed, and a snackbar when async operation fails.
+Not really related to AsyncController, but still useful. AsyncButton is a button that handles async onPressed methods. When user presses the button:
+* starts the async operation provided in onPressed method
+* shows loading indicator
+* blocks the user interface to avoid typing on keyboard or leaving the page
+* in case error, shows snackbar
+* finally, cleans up loading indicator & interface lock
+
 ```dart
 AsyncButton(
   // AsyncButtons takes a child like typical button
