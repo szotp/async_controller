@@ -29,7 +29,7 @@ class Minimal extends StatelessWidget {
   Widget build(BuildContext context) {
     return _controller.buildAsyncData(builder: (_, data) {
       // This builder runs only if data is available.
-      // buildAsync takes care of other situations
+      // buildAsyncData takes care of other situations
       return Text(data);
     });
   }

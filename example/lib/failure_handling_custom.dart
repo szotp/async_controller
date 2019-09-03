@@ -33,6 +33,11 @@ class _FailureHandlingCustomPageState extends State<FailureHandlingCustomPage> {
 class CustomAsyncDataDecoration extends AsyncDataDecoration {
   @override
   Widget buildError(BuildContext context, dynamic error, VoidCallback tryAgain) {
-    return Text('Sorry :(');
+    return Center(child: Text('Sorry :('));
+  }
+
+  @override
+  Widget buildNoDataYet(BuildContext context) {
+    return Center(child: Text('Loading...'));
   }
 }

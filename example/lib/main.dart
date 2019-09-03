@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 
 import 'async_button_example.dart';
 import 'failure_handling.dart';
+import 'failure_handling_custom.dart';
 import 'minimal.dart';
 import 'paged_loading_simple.dart';
 import 'pull_to_refresh.dart';
@@ -58,6 +59,7 @@ class ExampleSwitcher extends StatelessWidget {
       MinimalExample(),
       PullToRefreshPage(),
       FailureHandlingPage(),
+      FailureHandlingCustomPage(),
       PagedLoadingSimplePage(),
       PagedLoadingPage(),
       SortAndSearchPage(),
