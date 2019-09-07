@@ -40,7 +40,7 @@ class SearchingController extends FilteringAsyncController<String> {
   }
 
   String _searchText;
-  Sorting sorting = Sorting.descending;
+  Sorting sorting = Sorting.ascending;
 
   void setText(String value) {
     _searchText = value;

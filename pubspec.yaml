@@ -1,7 +1,7 @@
 name: async_controller
 description: A library for managing asynchronously loaded data in Flutter. 
 version: 0.0.1
-author: szotp
+author: szotp <qwertyszot@gmail.com>
 homepage: https://github.com/szotp/async_controller
 
 environment:
