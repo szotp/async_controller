@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:async/async.dart';
 import 'package:example/helpers.dart';
+import 'package:example/hooks_example.dart';
 import 'package:example/huge_list_page.dart';
 import 'package:example/paged_loading.dart';
 import 'package:example/refreshers_page.dart';
@@ -13,6 +14,7 @@ import 'failure_handling.dart';
 import 'failure_handling_custom.dart';
 import 'minimal.dart';
 import 'paged_loading_simple.dart';
+import 'provider_example.dart';
 import 'pull_to_refresh.dart';
 import 'translator/translator_page.dart';
 
@@ -67,6 +69,8 @@ class ExampleSwitcher extends StatelessWidget {
       RefreshersPage(),
       TranslatorPage(),
       HugeListPage(),
+      ProviderExamplePage(),
+      HooksExamplePage(),
     ];
 
     return Scaffold(

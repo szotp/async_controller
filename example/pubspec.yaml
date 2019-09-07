@@ -13,6 +13,8 @@ dependencies:
   intl: ^0.15.8
   faker: ^1.1.1
   translator:
+  provider:
+  flutter_hooks:
 
 dependency_overrides:
   async_controller:

@@ -1,6 +1,9 @@
 # async_controller
 
-A library for managing asynchronously loaded data in Flutter. It handles loading indicator, error handling, and refreshing, in few lines of code.
+A library for managing asynchronously loaded data in Flutter.
+
+### Do I need this?
+If your project contains `isLoading` flags or error handling duplicated across many pages, you may benefit from this package. It will let you write async loading with minimal amount of boilerplate.
 
 ```dart
 final _controller = AsyncController<String>.method(() async {
@@ -24,7 +27,8 @@ Example: [minimal.dart](example/lib/minimal.dart)
 
 ### Pull to refresh
 
-AsynController plays nicely with pull to refresh.
+AsynController provides an method that you can plug right into RefreshIndicator. If user tries to refresh while loading is already pending - the provious loading will be cancelled. 
+
 ```dart
 final _controller = AsyncController.method(fetchSomething);
 RefreshIndicator(
@@ -35,7 +39,6 @@ RefreshIndicator(
 Example: [pull_to_refresh.dart](example/lib/pull_to_refresh.dart)
 
 ### Loading and error handling
-
 AsyncController used with `buildAsyncData`, automatically handles loading and error states. There is no need to manually change isLoading flag, or catch. AsyncController will do the right thing by default, while allowing for customizations.
 
 ```dart
@@ -133,3 +136,11 @@ AsyncButton(
 ),
 ```
 Example: [async_button_example.dart](example/lib/async_button_example.dart)
+
+### Interaction with other packages
+
+AsyncController plays nicely with other. It implements ChangeNotifier and ValueListenable - classes commonly used inside Flutter. You can use it with any state management / dependency injection that you want. The example project includes samples for flutter_hooks and provider.
+
+Example 1: [hooks_example.dart](example/lib/hooks_example.dart)
+
+Example 2: [provider_example.dart](example/lib/provider_example.dart)
