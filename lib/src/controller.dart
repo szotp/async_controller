@@ -53,10 +53,12 @@ enum AsyncControllerState {
 
 /// Simplified fetch function that does not care about cancellation.
 typedef AsyncControllerFetch<T> = Future<T> Function();
-typedef AsyncControllerFetchExpanded<T> = Future<T> Function(AsyncFetchItem status);
+typedef AsyncControllerFetchExpanded<T> = Future<T> Function(
+    AsyncFetchItem status);
 
 /// Interface used by AsyncData
-abstract class LoadingValueListenable<T> implements ValueListenable<T>, Refreshable {
+abstract class LoadingValueListenable<T>
+    implements ValueListenable<T>, Refreshable {
   int get version;
   bool get hasData;
   bool get isLoading;
@@ -149,7 +151,8 @@ abstract class LoadingValueListenable<T> implements ValueListenable<T>, Refresha
 }
 
 /// A controller for managing asynchronously loading data.
-abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListenable<T> {
+abstract class AsyncController<T> extends ChangeNotifier
+    with LoadingValueListenable<T> {
   AsyncController();
 
   factory AsyncController.method(AsyncControllerFetch<T> method) {
@@ -228,7 +231,8 @@ abstract class AsyncController<T> extends ChangeNotifier with LoadingValueListen
   /// If AsyncStatus gets cancelled, for example when users performs pull to refresh,
   /// this method will ignore the result of fetch completely.
   @protected
-  Future<void> internallyLoadAndNotify([AsyncControllerFetchExpanded<T> fetch]) {
+  Future<void> internallyLoadAndNotify(
+      [AsyncControllerFetchExpanded<T> fetch]) {
     return AsyncFetchItem.runFetch((status) async {
       _cancelCurrentFetch(status);
 
@@ -336,7 +340,8 @@ class _SimpleAsyncController<T> extends AsyncController<T> {
 
 /// A controller that does additonal processing after fetching base data.
 /// Useful for local filtering, sorting, etc.
-abstract class MappedAsyncController<BaseValue, MappedValue> extends AsyncController<MappedValue> {
+abstract class MappedAsyncController<BaseValue, MappedValue>
+    extends AsyncController<MappedValue> {
   Future<BaseValue> fetchBase();
 
   /// A method that runs after expensive base fetch. Call setNeedsLocalTransform if conditions affecting the transform has changed.
@@ -371,7 +376,8 @@ abstract class MappedAsyncController<BaseValue, MappedValue> extends AsyncContro
 }
 
 /// A controller that loads a list and then removes some items from it.
-abstract class FilteringAsyncController<Value> extends MappedAsyncController<List<Value>, List<Value>> {
+abstract class FilteringAsyncController<Value>
+    extends MappedAsyncController<List<Value>, List<Value>> {
   @override
   bool get hasData => super.hasData && value.isNotEmpty;
 }

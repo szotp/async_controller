@@ -30,7 +30,8 @@ class AsyncData<T> extends StatefulWidget {
   _AsyncDataState createState() => _AsyncDataState<T>();
 
   static _AsyncDataState of(BuildContext context) {
-    final state = context.ancestorStateOfType(const TypeMatcher<_AsyncDataState>());
+    final state =
+        context.ancestorStateOfType(const TypeMatcher<_AsyncDataState>());
     return state;
   }
 }
@@ -73,7 +74,8 @@ class _AsyncDataState<T> extends State<AsyncData<T>> {
         case AsyncControllerState.hasData:
           return widget.builder(context, widget.controller.value);
         case AsyncControllerState.failed:
-          return widget.decorator.buildError(context, widget.controller.error, widget.controller.performUserInitiatedRefresh);
+          return widget.decorator.buildError(context, widget.controller.error,
+              widget.controller.performUserInitiatedRefresh);
         case AsyncControllerState.noDataYet:
           return widget.decorator.buildNoDataYet(context);
         case AsyncControllerState.noData:
@@ -98,7 +100,8 @@ class AsyncDataDecoration {
   }
 
   /// There was error during fetch, we don't data to show so we may show error with try again button.
-  Widget buildError(BuildContext context, dynamic error, VoidCallback tryAgain) {
+  Widget buildError(
+      BuildContext context, dynamic error, VoidCallback tryAgain) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,

@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 
 class FailureHandlingCustomPage extends StatefulWidget with ExamplePage {
   @override
-  _FailureHandlingCustomPageState createState() => _FailureHandlingCustomPageState();
+  _FailureHandlingCustomPageState createState() =>
+      _FailureHandlingCustomPageState();
 
   @override
   String get title => 'Failure handling custom';
@@ -32,7 +33,8 @@ class _FailureHandlingCustomPageState extends State<FailureHandlingCustomPage> {
 
 class CustomAsyncDataDecoration extends AsyncDataDecoration {
   @override
-  Widget buildError(BuildContext context, dynamic error, VoidCallback tryAgain) {
+  Widget buildError(
+      BuildContext context, dynamic error, VoidCallback tryAgain) {
     return Center(child: Text('Sorry :('));
   }
 

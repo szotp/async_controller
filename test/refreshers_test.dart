@@ -97,7 +97,8 @@ class FakeTimer implements Timer {
   void run(AsyncCallback callback) {
     runZoned(
       callback,
-      zoneSpecification: ZoneSpecification(createPeriodicTimer: createPeriodicTimer),
+      zoneSpecification:
+          ZoneSpecification(createPeriodicTimer: createPeriodicTimer),
     );
   }
 
@@ -112,7 +113,8 @@ class FakeTimer implements Timer {
     f(this);
   }
 
-  Timer createPeriodicTimer(Zone self, ZoneDelegate parent, Zone zone, Duration period, void Function(Timer timer) f) {
+  Timer createPeriodicTimer(Zone self, ZoneDelegate parent, Zone zone,
+      Duration period, void Function(Timer timer) f) {
     return this;
   }
 }

@@ -11,7 +11,8 @@ class _HugeListController extends PagedAsyncController<String> {
   @override
   Future<PagedData<String>> fetchPage(int pageIndex) async {
     await Future<void>.delayed(Duration(milliseconds: 500));
-    final data = List.generate(pageSize, (i) => 'Item ${i + pageIndex * pageSize}');
+    final data =
+        List.generate(pageSize, (i) => 'Item ${i + pageIndex * pageSize}');
     return PagedData(pageIndex, null, data);
   }
 }
@@ -26,7 +27,8 @@ class HugeListPage extends StatefulWidget with ExamplePage {
 
 class _HugeListPageState extends State<HugeListPage> {
   final _controller = _HugeListController();
-  final _scrollController = ScrollController(initialScrollOffset: tileHeight * 10000000);
+  final _scrollController =
+      ScrollController(initialScrollOffset: tileHeight * 10000000);
 
   static const tileHeight = 50.0;
 

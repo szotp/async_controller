@@ -75,7 +75,10 @@ class AsyncButton extends StatefulWidget {
     return Stack(
       children: <Widget>[
         builder(settings),
-        Visibility(visible: state.isLoading, child: Positioned.fill(child: Center(child: buildLoadingIndicator())))
+        Visibility(
+            visible: state.isLoading,
+            child:
+                Positioned.fill(child: Center(child: buildLoadingIndicator())))
       ],
     );
   }

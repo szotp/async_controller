@@ -13,15 +13,17 @@ class RefreshersPage extends StatefulWidget with ExamplePage {
 }
 
 class _RefreshersPageState extends State<RefreshersPage> {
-  final controllerA = AsyncController<DateTime>.method(() => Future.value(DateTime.now()))
-    ..addRefresher(
-      PeriodicRefresher(Duration(seconds: 1)),
-    );
+  final controllerA =
+      AsyncController<DateTime>.method(() => Future.value(DateTime.now()))
+        ..addRefresher(
+          PeriodicRefresher(Duration(seconds: 1)),
+        );
 
-  final controllerB = AsyncController<DateTime>.method(() => Future.value(DateTime.now()))
-    ..addRefresher(
-      InForegroundRefresher(),
-    );
+  final controllerB =
+      AsyncController<DateTime>.method(() => Future.value(DateTime.now()))
+        ..addRefresher(
+          InForegroundRefresher(),
+        );
 
   final controllerC = AsyncController<DateTime>.method(() async {
     await Future<void>.delayed(Duration(seconds: 3));
@@ -64,8 +66,10 @@ class _RefreshersPageState extends State<RefreshersPage> {
       body: ListView(
         children: <Widget>[
           buildClock(controllerA, 'This timer updates every second'),
-          buildClock(controllerB, 'This timer updates when app goes to foreground'),
-          buildClock(controllerC, 'This timer always fails but tries to refresh when connection goes back. Try toggling airplane mode.')
+          buildClock(
+              controllerB, 'This timer updates when app goes to foreground'),
+          buildClock(controllerC,
+              'This timer always fails but tries to refresh when connection goes back. Try toggling airplane mode.')
         ],
       ),
     );

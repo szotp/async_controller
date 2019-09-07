@@ -84,7 +84,8 @@ class ExampleSwitcher extends StatelessWidget {
           return ListTile(
             title: Text(example.title),
             onTap: () {
-              final route = MaterialPageRoute<void>(builder: (context) => examples[i]);
+              final route =
+                  MaterialPageRoute<void>(builder: (context) => examples[i]);
               Navigator.of(context).push(route);
             },
           );

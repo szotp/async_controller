@@ -35,10 +35,12 @@ class _NewChangeNotifierHook<T extends ChangeNotifier> extends Hook<T> {
   final T Function() builder;
 
   @override
-  _NewChangeNotifierHookState<T> createState() => _NewChangeNotifierHookState<T>();
+  _NewChangeNotifierHookState<T> createState() =>
+      _NewChangeNotifierHookState<T>();
 }
 
-class _NewChangeNotifierHookState<T extends ChangeNotifier> extends HookState<T, _NewChangeNotifierHook<T>> {
+class _NewChangeNotifierHookState<T extends ChangeNotifier>
+    extends HookState<T, _NewChangeNotifierHook<T>> {
   T notifier;
 
   @override

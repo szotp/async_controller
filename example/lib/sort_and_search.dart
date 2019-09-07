@@ -114,7 +114,8 @@ class _SortAndSearchPageState extends State<SortAndSearchPage> {
                     },
                   );
                 },
-                decorator: const PagedListDecoration(noDataContent: Text('I found nothing...'))),
+                decorator: const PagedListDecoration(
+                    noDataContent: Text('I found nothing...'))),
           ),
         ],
       ),

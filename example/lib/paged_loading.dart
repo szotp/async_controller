@@ -23,7 +23,8 @@ class FakePageDataProvider extends PagedAsyncController<String> {
     }
 
     final count = min(totalCount, index + pageSize) - index;
-    final list = Iterable.generate(count, (i) => 'Item ${index + i + 1}').toList();
+    final list =
+        Iterable.generate(count, (i) => 'Item ${index + i + 1}').toList();
 
     print('fetchPage, ${list.length} items');
     return PagedData(index, totalCount, list);

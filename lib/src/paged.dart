@@ -18,7 +18,8 @@ class PagedData<T> {
 /// Loads data into array, in pages.
 /// The value of loader is totalCount of items available. The actual items can be fetched using getItem method.
 abstract class PagedAsyncController<T> extends AsyncController<int> {
-  PagedAsyncController(this.pageSize, {CacheMap<int, PagedData<T>> cache}) : _cache = cache ?? CacheMap(10);
+  PagedAsyncController(this.pageSize, {CacheMap<int, PagedData<T>> cache})
+      : _cache = cache ?? CacheMap(10);
 
   final CacheMap<int, PagedData<T>> _cache;
   final int pageSize;
@@ -37,7 +38,8 @@ abstract class PagedAsyncController<T> extends AsyncController<int> {
       final page = await fetchPage(pageIndex);
       if (!status.isCancelled) {
         _cache[pageIndex] = page;
-        _loadedItemsCount = max(_loadedItemsCount, pageIndex * pageSize + page.data.length);
+        _loadedItemsCount =
+            max(_loadedItemsCount, pageIndex * pageSize + page.data.length);
       }
       return page.totalCount;
     } catch (e) {
@@ -112,7 +114,8 @@ class PagedListView<T> extends StatelessWidget {
     return dataController.buildAsyncData(
       decorator: decoration,
       builder: (_, totalCount) {
-        final itemCount = decoration.getTileCount(dataController.loadedItemsCount, totalCount);
+        final itemCount = decoration.getTileCount(
+            dataController.loadedItemsCount, totalCount);
 
         return ListView.builder(
           controller: scrollController,
@@ -144,7 +147,8 @@ class PagedListLoadMoreTile extends StatelessWidget {
       selector: () => controller.error != null && !controller.isLoading,
       builder: (context, showError) {
         if (showError) {
-          return decorator.buildError(context, controller.error, controller.refreshFailedPage);
+          return decorator.buildError(
+              context, controller.error, controller.refreshFailedPage);
         } else {
           return decorator.buildNoDataYet(context);
         }

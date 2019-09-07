@@ -3,7 +3,7 @@
 A library for managing asynchronously loaded data in Flutter.
 
 ### Do I need this?
-If your project contains `isLoading` flags or error handling duplicated across many pages, you may benefit from this package. It will let you write async loading with minimal amount of boilerplate.
+If your project contains `isLoading` flags or error handling duplicated across many pages, you may benefit from this package. It will let you write async loading with minimal amount of boilerplate. Unlike FutureBuilder, AsyncController ensures that fetch is performed only when necessary. You may configure when controller should refresh using provided Refreshers. More on that later.
 
 ```dart
 final _controller = AsyncController<String>.method(() async {
@@ -26,8 +26,7 @@ class Minimal extends StatelessWidget {
 Example: [minimal.dart](example/lib/minimal.dart)
 
 ### Pull to refresh
-
-AsynController provides an method that you can plug right into RefreshIndicator. If user tries to refresh while loading is already pending - the provious loading will be cancelled. 
+AsynController provides a method that you can plug right into a RefreshIndicator. Also, if user tries to refresh while loading is already pending the previous loading will be cancelled. 
 
 ```dart
 final _controller = AsyncController.method(fetchSomething);

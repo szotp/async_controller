@@ -28,7 +28,8 @@ abstract class LoadingRefresher {
   void deactivate();
 }
 
-class InForegroundRefresher extends LoadingRefresher with WidgetsBindingObserver {
+class InForegroundRefresher extends LoadingRefresher
+    with WidgetsBindingObserver {
   @override
   void activate() {
     WidgetsBinding.instance.addObserver(this);
@@ -74,7 +75,8 @@ class StreamRefresher<T> extends LoadingRefresher {
 }
 
 class OnReconnectedRefresher extends StreamRefresher<ConnectivityResult> {
-  OnReconnectedRefresher([this.flag = SetNeedsRefreshFlag.ifError]) : super(Connectivity().onConnectivityChanged);
+  OnReconnectedRefresher([this.flag = SetNeedsRefreshFlag.ifError])
+      : super(Connectivity().onConnectivityChanged);
 
   final SetNeedsRefreshFlag flag;
   bool _wasConnected = false;

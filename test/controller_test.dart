@@ -9,13 +9,15 @@ void main() {
   test('test initial conditions', () {
     final loader = Controller();
     expect(loader.value, null);
-    expect(loader.snapshot, const AsyncSnapshot<int>.nothing().inState(ConnectionState.waiting));
+    expect(loader.snapshot,
+        const AsyncSnapshot<int>.nothing().inState(ConnectionState.waiting));
   });
 
   test('test loads on listener', () {
     final loader = Controller();
     loader.addListener(() {});
-    expect(loader.snapshot, const AsyncSnapshot<int>.nothing().inState(ConnectionState.waiting));
+    expect(loader.snapshot,
+        const AsyncSnapshot<int>.nothing().inState(ConnectionState.waiting));
   });
 
   test('test loads on listeners', () async {

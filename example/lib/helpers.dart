@@ -16,7 +16,8 @@ abstract class ExamplePage implements Widget {
 }
 
 class CasePicker<T> extends StatefulWidget {
-  const CasePicker({Key key, this.builder, this.cases, this.appBar}) : super(key: key);
+  const CasePicker({Key key, this.builder, this.cases, this.appBar})
+      : super(key: key);
 
   final AppBar appBar;
   final List<TitledValue<T>> cases;
