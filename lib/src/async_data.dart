@@ -56,6 +56,12 @@ class _AsyncDataState<T> extends State<AsyncData<T>> {
     }
   }
 
+  @override
+  void dispose() {
+    widget.controller.removeListener(_handleChange);
+    super.dispose();
+  }
+
   void _handleChange() {
     if (_version > 0 && _version == widget.controller.version) {
       // skip unnecessary rebuilds after data is available
