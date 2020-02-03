@@ -18,7 +18,7 @@ class AsyncData<T> extends StatefulWidget {
     this.decorator = const AsyncDataDecoration(),
   }) : super(key: key);
 
-  final LoadingValueListenable<T> controller;
+  final AsyncController<T> controller;
 
   /// This builder runs only when data is available.
   final AsyncDataFunction<T> builder;
@@ -30,9 +30,7 @@ class AsyncData<T> extends StatefulWidget {
   _AsyncDataState createState() => _AsyncDataState<T>();
 
   static _AsyncDataState of(BuildContext context) {
-    final state =
-        context.ancestorStateOfType(const TypeMatcher<_AsyncDataState>());
-    return state;
+    return context.findAncestorStateOfType<_AsyncDataState>();
   }
 }
 
@@ -121,8 +119,8 @@ class AsyncDataDecoration {
 
   /// There is no data because it was not loaded yet.
   Widget buildNoDataYet(BuildContext context) {
-    return Center(
-      child: const CircularProgressIndicator(),
+    return const Center(
+      child: CircularProgressIndicator(),
     );
   }
 

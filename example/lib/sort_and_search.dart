@@ -86,6 +86,7 @@ class _SortAndSearchPageState extends State<SortAndSearchPage> {
               Align(
                 alignment: Alignment.centerRight,
                 child: FlatButton(
+                  onPressed: _controller.toggleSorting,
                   child: _controller.buildAsyncProperty<Sorting>(
                     selector: () => _controller.sorting,
                     builder: (context, sorting) {
@@ -97,7 +98,6 @@ class _SortAndSearchPageState extends State<SortAndSearchPage> {
                       }
                     },
                   ),
-                  onPressed: _controller.toggleSorting,
                 ),
               ),
             ],

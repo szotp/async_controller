@@ -15,14 +15,14 @@ class _AsyncButtonPageState extends State<AsyncButtonPage> {
   int _counter = 0;
 
   Future<void> success() async {
-    await Future<void>.delayed(Duration(seconds: 1));
+    await Future<void>.delayed(const Duration(seconds: 1));
     setState(() {
       _counter++;
     });
   }
 
   Future<void> failure() async {
-    await Future<void>.delayed(Duration(seconds: 1));
+    await Future<void>.delayed(const Duration(seconds: 1));
     throw 'Failed';
   }
 
@@ -37,32 +37,32 @@ class _AsyncButtonPageState extends State<AsyncButtonPage> {
             Text('Clicks: $_counter'),
             const SizedBox(height: 16),
             AsyncButton(
-              child: const Text('This will work'),
               onPressed: success,
               builder: buttonStyleOne,
+              child: const Text('This will work'),
             ),
             AsyncButton(
-              child: const Text('This will fail'),
               onPressed: failure,
               builder: buttonStyleTwo,
               loadingColor: Colors.white,
+              child: const Text('This will fail'),
             ),
             AsyncButton(
-              child: const Text('This will not lock interface'),
               onPressed: success,
               builder: buttonStyleOne,
               lockInterface: false,
+              child: const Text('This will not lock interface'),
             ),
             AsyncButton(
-              // AsyncButtons takes a child like typical button
-              child: const Text('Press me!'),
               // AsyncButton accepts async onPressed method and handles it
-              onPressed: () => Future.delayed(Duration(seconds: 1)),
+              onPressed: () => Future.delayed(const Duration(seconds: 1)),
               // Through builder method we can support any kind of button
               builder: (x) => FlatButton(
                 onPressed: x.onPressed,
                 child: x.child,
               ),
+              // AsyncButtons takes a child like typical button
+              child: const Text('Press me!'),
             ),
           ],
         ),
@@ -74,9 +74,9 @@ class _AsyncButtonPageState extends State<AsyncButtonPage> {
     return SizedBox(
       width: 200,
       child: OutlineButton(
-        child: settings.child,
         onPressed: settings.onPressed,
         color: Colors.red,
+        child: settings.child,
       ),
     );
   }
@@ -85,10 +85,10 @@ class _AsyncButtonPageState extends State<AsyncButtonPage> {
     return SizedBox(
       width: 200,
       child: FlatButton(
-        child: settings.child,
         onPressed: settings.onPressed,
         color: Colors.orange,
         textColor: Colors.white,
+        child: settings.child,
       ),
     );
   }

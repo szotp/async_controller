@@ -29,7 +29,7 @@ void main() {
   test('test periodic refresher', () async {
     final fake = FakeTimer();
     fake.run(() async {
-      final notifier = PeriodicRefresher(Duration(seconds: 1));
+      final notifier = PeriodicRefresher(const Duration(seconds: 1));
       expect(fake.tick, 0);
 
       final loader = Controller();

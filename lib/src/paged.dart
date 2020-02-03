@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'async_data.dart';
 import 'controller.dart';
+import 'controller_ext.dart';
 
 /// A slice of bigger array, returned from backend. All values must not be null.
 class PagedData<T> {
@@ -102,12 +103,14 @@ class PagedListView<T> extends StatelessWidget {
     this.scrollController,
     @required this.itemBuilder,
     this.decoration = PagedListDecoration.empty,
+    this.physics,
   }) : super(key: key);
 
   final PagedAsyncController<T> dataController;
   final PagedListDecoration decoration;
   final ScrollController scrollController;
   final Widget Function(BuildContext context, int i, T item) itemBuilder;
+  final ScrollPhysics physics;
 
   @override
   Widget build(BuildContext context) {
@@ -120,6 +123,7 @@ class PagedListView<T> extends StatelessWidget {
         return ListView.builder(
           controller: scrollController,
           itemCount: itemCount,
+          physics: physics,
           itemBuilder: (context, i) {
             final item = dataController.getItem(i);
             if (item != null) {
@@ -140,7 +144,7 @@ class PagedListLoadMoreTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final builder = AsyncData.of(context);
-    final PagedAsyncController controller = builder.controller;
+    final controller = builder.controller as PagedAsyncController;
     final decorator = builder.widget.decorator;
 
     return controller.buildAsyncProperty<bool>(

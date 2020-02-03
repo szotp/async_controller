@@ -45,7 +45,6 @@ Future<List<int>> collect() async {
   final stream = StreamQueue(lol2());
   while (true) {
     final got = await stream.take(1);
-    print('got');
     if (got.isEmpty) {
       break;
     }

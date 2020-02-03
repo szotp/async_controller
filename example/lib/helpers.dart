@@ -7,6 +7,7 @@ class TitledValue<T> {
   final T value;
 }
 
+// ignore: avoid_implementing_value_types
 abstract class ExamplePage implements Widget {
   String get title;
 
@@ -31,18 +32,19 @@ class _CasePickerState<T> extends State<CasePicker<T>> {
   int index = 0;
 
   void setIndex(int newIndex) {
+    var index = newIndex;
     final last = widget.cases.length - 1;
 
     if (newIndex < 0) {
-      newIndex = last;
+      index = last;
     }
 
     if (newIndex > last) {
-      newIndex = 0;
+      index = 0;
     }
 
     setState(() {
-      index = newIndex;
+      this.index = index;
     });
   }
 
@@ -53,8 +55,8 @@ class _CasePickerState<T> extends State<CasePicker<T>> {
     var i = 0;
     final items = widget.cases.map((x) {
       return DropdownMenuItem<int>(
-        child: Text(x.title),
         value: i++,
+        child: Text(x.title),
       );
     });
 

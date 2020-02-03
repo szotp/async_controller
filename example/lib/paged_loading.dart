@@ -26,7 +26,6 @@ class FakePageDataProvider extends PagedAsyncController<String> {
     final list =
         Iterable.generate(count, (i) => 'Item ${index + i + 1}').toList();
 
-    print('fetchPage, ${list.length} items');
     return PagedData(index, totalCount, list);
   }
 
@@ -54,7 +53,7 @@ class _PagedLoadingPageState extends State<PagedLoadingPage> {
     addRefreshIndicator: true,
   );
 
-  final cases = [
+  final List<TitledValue<FakePageDataProvider>> cases = [
     TitledValue('Always works', FakePageDataProvider(25)),
     TitledValue('No content', FakePageDataProvider(0)),
     TitledValue('Always error', FakePageDataProvider(0, errorChance: 100)),

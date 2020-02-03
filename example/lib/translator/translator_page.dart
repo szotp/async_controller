@@ -17,7 +17,7 @@ class TranslatorController extends AsyncController<String> {
     setNeedsRefresh(SetNeedsRefreshFlag.always);
   }
 
-  var isTranslating = false;
+  bool isTranslating = false;
 
   @override
   Future<String> fetch(AsyncFetchItem status) async {
@@ -30,8 +30,6 @@ class TranslatorController extends AsyncController<String> {
     try {
       isTranslating = true;
       notifyListeners();
-
-      print('Translating $_input...');
       return await _service.translate(_input);
     } finally {
       isTranslating = false;

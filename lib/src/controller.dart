@@ -1,12 +1,11 @@
 import 'dart:async';
 
+import 'package:async_controller/async_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
-import 'async_data.dart';
 import 'refreshers.dart';
-import 'utils.dart';
 
 /// Object created for every fetch to control cancellation.
 class AsyncFetchItem {
@@ -56,108 +55,17 @@ typedef AsyncControllerFetch<T> = Future<T> Function();
 typedef AsyncControllerFetchExpanded<T> = Future<T> Function(
     AsyncFetchItem status);
 
-/// Interface used by AsyncData
-abstract class LoadingValueListenable<T>
-    implements ValueListenable<T>, Refreshable {
-  int get version;
-  bool get hasData;
-  bool get isLoading;
-  Object get error;
-
-  /// Method usually used to execute pull to refresh.
-  Future<void> performUserInitiatedRefresh();
-
-  void dispose();
-
-  AsyncControllerState get state {
-    if (hasData) {
-      return AsyncControllerState.hasData;
-    } else if (error != null && !isLoading) {
-      return AsyncControllerState.failed;
-    } else if (version == 0) {
-      return AsyncControllerState.noDataYet;
-    } else {
-      return AsyncControllerState.noData;
-    }
-  }
-
-  /// Provides AsyncSnapshot for compability with other widgets.
-  /// It is usually better to use state property.
-  AsyncSnapshot<T> get snapshot {
-    if (version > 0) {
-      return AsyncSnapshot.withData(ConnectionState.done, value);
-    } else if (error != null) {
-      return AsyncSnapshot.withError(ConnectionState.done, error);
-    } else {
-      return const AsyncSnapshot.withData(ConnectionState.waiting, null);
-    }
-  }
-
-  AsyncData<T> buildAsyncData({
-    @required AsyncDataFunction<T> builder,
-    AsyncDataDecoration decorator = const AsyncDataDecoration(),
-  }) {
-    return AsyncData(
-      controller: this,
-      decorator: decorator,
-      builder: builder,
-    );
-  }
-
-  /// Returns reactive widget that builds when value returned from selector is different than before.
-  /// The selector runs only when this controller changes.
-  Widget buildAsyncProperty<P>({
-    P Function() selector,
-    @required Widget Function(BuildContext, P) builder,
-  }) {
-    return AsyncPropertyBuilder<P>(
-      selector: selector,
-      listenable: this,
-      builder: builder,
-    );
-  }
-
-  Widget buildAsyncVisibility({bool Function() selector, Widget child}) {
-    return AsyncPropertyBuilder<bool>(
-      selector: selector,
-      listenable: this,
-      builder: (_, visible) {
-        print('Visibility $visible');
-        return Visibility(
-          visible: visible,
-          child: child,
-        );
-      },
-    );
-  }
-
-  Widget buildAsyncOpacity({
-    bool Function() selector,
-    Widget child,
-    double opacityForTrue = 1.0,
-    double opacityForFalse = 0.5,
-  }) {
-    return AsyncPropertyBuilder<bool>(
-      selector: selector,
-      listenable: this,
-      builder: (_, value) {
-        return Opacity(
-          opacity: value ? opacityForTrue : opacityForFalse,
-          child: child,
-        );
-      },
-    );
-  }
-}
-
 /// A controller for managing asynchronously loading data.
 abstract class AsyncController<T> extends ChangeNotifier
-    with LoadingValueListenable<T> {
+    implements ValueListenable<T>, Refreshable {
   AsyncController();
 
   factory AsyncController.method(AsyncControllerFetch<T> method) {
     return _SimpleAsyncController(method);
   }
+
+  // prints errors in debug mode, ensures that they are not programmer's mistake
+  static bool debugCheckErrors = true;
 
   /// _version == 0 means that there was no fetch yet
   int _version = 0;
@@ -173,14 +81,21 @@ abstract class AsyncController<T> extends ChangeNotifier
   @override
   T get value => _value;
 
-  @override
   Object get error => _error;
-
-  @override
   bool get isLoading => _isLoading;
-
-  @override
   int get version => _version;
+
+  AsyncControllerState get state {
+    if (hasData) {
+      return AsyncControllerState.hasData;
+    } else if (error != null && !isLoading) {
+      return AsyncControllerState.failed;
+    } else if (version == 0) {
+      return AsyncControllerState.noDataYet;
+    } else {
+      return AsyncControllerState.noData;
+    }
+  }
 
   @override
   void setNeedsRefresh(SetNeedsRefreshFlag flags) {
@@ -220,7 +135,6 @@ abstract class AsyncController<T> extends ChangeNotifier
   }
 
   /// Indicates if controller has data that could be displayed.
-  @override
   bool get hasData => _value != null;
 
   @protected
@@ -256,6 +170,14 @@ abstract class AsyncController<T> extends ChangeNotifier
           return;
         }
 
+        if (kDebugMode && AsyncController.debugCheckErrors) {
+          // this is disabled in production code and behind a flag
+          // ignore: avoid_print
+          print('${this} got error:\n$e');
+
+          assert(e is! NoSuchMethodError);
+        }
+
         _error = e;
       }
 
@@ -264,7 +186,6 @@ abstract class AsyncController<T> extends ChangeNotifier
     });
   }
 
-  @override
   Future<void> performUserInitiatedRefresh() {
     return internallyLoadAndNotify();
   }
@@ -291,7 +212,7 @@ abstract class AsyncController<T> extends ChangeNotifier
 
   @protected
   void activate() {
-    for (var b in _behaviors) {
+    for (final b in _behaviors) {
       b.activate();
     }
     loadIfNeeded();
@@ -299,13 +220,13 @@ abstract class AsyncController<T> extends ChangeNotifier
 
   @protected
   void deactivate() {
-    for (var b in _behaviors) {
+    for (final b in _behaviors) {
       b.deactivate();
     }
   }
 
   @override
-  void addListener(listener) {
+  void addListener(void Function() listener) {
     if (!hasListeners) {
       activate();
     }
@@ -313,7 +234,7 @@ abstract class AsyncController<T> extends ChangeNotifier
   }
 
   @override
-  void removeListener(listener) {
+  void removeListener(void Function() listener) {
     super.removeListener(listener);
     if (!hasListeners) {
       deactivate();

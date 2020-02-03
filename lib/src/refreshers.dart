@@ -20,6 +20,7 @@ abstract class LoadingRefresher {
     _controller?.setNeedsRefresh(flag);
   }
 
+  //ignore: use_setters_to_change_properties
   void mount(Refreshable controller) {
     _controller = controller;
   }

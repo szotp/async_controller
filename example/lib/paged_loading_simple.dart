@@ -8,6 +8,8 @@ class _SimpleController extends PagedAsyncController<int> {
 
   @override
   Future<PagedData<int>> fetchPage(int pageIndex) async {
+    await Future<dynamic>.delayed(Duration(milliseconds: 150)); //<----- delay
+
     return PagedData(
       pageIndex,
       100000,

@@ -8,8 +8,7 @@ class Controller extends AsyncController<int> {
 
   Recorder<int> _recorder;
   Recorder<int> get r {
-    _recorder ??= Recorder<int>(this);
-    return _recorder;
+    return _recorder ??= Recorder<int>(this);
   }
 
   static Future<Controller> failed() async {
@@ -51,8 +50,8 @@ class Recorder<T> {
   }
 
   final AsyncController<T> input;
-  final data = <T>[];
-  final snapshots = <String>[];
+  final List<T> data = <T>[];
+  final List<String> snapshots = <String>[];
 
   void dispose() {
     input.removeListener(onChanged);
