@@ -39,6 +39,12 @@ class Controller extends AsyncController<int> {
     }
   }
 
+  Future<void> waitUntilFinished() async {
+    while (isLoading) {
+      await Future.delayed(Duration(milliseconds: 10));
+    }
+  }
+
   /// Ensures that futures were handled
   Future<void> pump() => Future.microtask(() {});
 }

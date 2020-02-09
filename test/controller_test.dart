@@ -73,8 +73,8 @@ void main() {
     expect(recorder.snapshots, [
       'noDataYet : null',
       'failed    : failed',
-      'noDataYet : failed',
-      'hasData   : 1',
+      'noDataYet : null',
+      'hasData   : 1'
     ]);
   });
 

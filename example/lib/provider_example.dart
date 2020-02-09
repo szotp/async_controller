@@ -17,7 +17,7 @@ class ProviderExamplePage extends StatelessWidget with ExamplePage {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      builder: _Loader.create,
+      create: _Loader.create,
       child: Scaffold(
         appBar: buildAppBar(),
         body: Builder(

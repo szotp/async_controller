@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-class TitledValue<T> {
-  const TitledValue(this.title, this.value);
+class CasePickerItem {
+  const CasePickerItem(this.title, this.builder);
 
   final String title;
-  final T value;
+  final WidgetBuilder builder;
 }
 
 // ignore: avoid_implementing_value_types
@@ -16,19 +16,17 @@ abstract class ExamplePage implements Widget {
   }
 }
 
-class CasePicker<T> extends StatefulWidget {
-  const CasePicker({Key key, this.builder, this.cases, this.appBar})
-      : super(key: key);
+class CasePicker extends StatefulWidget {
+  const CasePicker({Key key, this.cases, this.appBar}) : super(key: key);
 
   final AppBar appBar;
-  final List<TitledValue<T>> cases;
-  final Widget Function(BuildContext context, T item) builder;
+  final List<CasePickerItem> cases;
 
   @override
-  _CasePickerState createState() => _CasePickerState<T>();
+  _CasePickerState createState() => _CasePickerState();
 }
 
-class _CasePickerState<T> extends State<CasePicker<T>> {
+class _CasePickerState extends State<CasePicker> {
   int index = 0;
 
   void setIndex(int newIndex) {
@@ -94,7 +92,7 @@ class _CasePickerState<T> extends State<CasePicker<T>> {
             ],
           ),
           Expanded(
-            child: widget.builder(context, item.value),
+            child: Builder(builder: item.builder),
           ),
         ],
       ),

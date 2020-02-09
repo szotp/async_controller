@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'helpers.dart';
 
 class _SimpleController extends PagedAsyncController<int> {
-  _SimpleController() : super(10);
+  _SimpleController();
 
   @override
   Future<PagedData<int>> fetchPage(int pageIndex) async {
@@ -12,24 +12,29 @@ class _SimpleController extends PagedAsyncController<int> {
 
     return PagedData(
       pageIndex,
-      100000,
-      List.generate(pageSize, (i) => i + pageIndex * pageSize),
+      1000,
+      List.generate(10, (i) => i + pageIndex * 10),
     );
   }
 }
 
-final _controller = _SimpleController();
-
-class PagedLoadingSimplePage extends StatelessWidget with ExamplePage {
+class PagedLoadingSimplePage extends StatefulWidget with ExamplePage {
   @override
   String get title => 'Paged data - simplest';
 
   @override
+  _PagedLoadingSimplePageState createState() => _PagedLoadingSimplePageState();
+}
+
+class _PagedLoadingSimplePageState extends State<PagedLoadingSimplePage> {
+  final _controller = _SimpleController();
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: buildAppBar(),
+      appBar: widget.buildAppBar(),
       body: PagedListView<int>(
-        dataController: _controller,
+        controller: _controller,
         itemBuilder: (_, __, item) {
           return ListTile(title: Text(item.toString()));
         },

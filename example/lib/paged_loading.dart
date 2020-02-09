@@ -7,18 +7,28 @@ import 'helpers.dart';
 
 /// Utility to mock paged data loading with various situations.
 class FakePageDataProvider extends PagedAsyncController<String> {
-  FakePageDataProvider(this.totalCount, {this.errorChance = 0}) : super(5);
+  FakePageDataProvider(
+    this.totalCount, {
+    this.errorChance = 0,
+    this.errorChanceOnFirstPage,
+  });
 
   @override
   final int totalCount;
   final int errorChance;
+  final int errorChanceOnFirstPage;
 
   @override
   Future<PagedData<String>> fetchPage(int pageIndex) async {
     final index = pageSize * pageIndex;
     await Future<void>.delayed(Duration(milliseconds: 500));
 
-    if (errorChance > Random().nextInt(100)) {
+    var chance = errorChance;
+    if (pageIndex == 0 && errorChanceOnFirstPage != null) {
+      chance = errorChanceOnFirstPage;
+    }
+
+    if (chance > Random().nextInt(100)) {
       throw 'Random failure';
     }
 
@@ -26,7 +36,7 @@ class FakePageDataProvider extends PagedAsyncController<String> {
     final list =
         Iterable.generate(count, (i) => 'Item ${index + i + 1}').toList();
 
-    return PagedData(index, totalCount, list);
+    return PagedData(pageIndex, totalCount, list);
   }
 
   @override
@@ -35,7 +45,6 @@ class FakePageDataProvider extends PagedAsyncController<String> {
     reset();
   }
 
-  @override
   int get pageSize => 5;
 }
 
@@ -53,25 +62,54 @@ class _PagedLoadingPageState extends State<PagedLoadingPage> {
     addRefreshIndicator: true,
   );
 
-  final List<TitledValue<FakePageDataProvider>> cases = [
-    TitledValue('Always works', FakePageDataProvider(25)),
-    TitledValue('No content', FakePageDataProvider(0)),
-    TitledValue('Always error', FakePageDataProvider(0, errorChance: 100)),
-    TitledValue('Sometimes error', FakePageDataProvider(1000, errorChance: 50)),
-  ];
+  CasePickerItem buildCase(String title, FakePageDataProvider provider,
+      [Widget Function(FakePageDataProvider) builder]) {
+    return CasePickerItem(title, (context) => (builder ?? buildList)(provider));
+  }
+
+  List<CasePickerItem> cases;
 
   @override
   Widget build(BuildContext context) {
-    return CasePicker<FakePageDataProvider>(
-      appBar: widget.buildAppBar(),
-      cases: cases,
-      builder: buildCase,
+    cases ??= [
+      buildCase('Always works', FakePageDataProvider(25)),
+      buildCase('No content', FakePageDataProvider(0)),
+      buildCase('Always error', FakePageDataProvider(0, errorChance: 100)),
+      buildCase('Sometimes error', FakePageDataProvider(1000, errorChance: 50)),
+      buildCase(
+        'Always error on next page',
+        FakePageDataProvider(1000, errorChance: 100, errorChanceOnFirstPage: 0),
+      ),
+      buildCase('Grid', FakePageDataProvider(1000), buildGridExample),
+    ];
+
+    return CasePicker(appBar: widget.buildAppBar(), cases: cases);
+  }
+
+  Widget buildGridExample(FakePageDataProvider provider) {
+    return PagedListView(
+      controller: provider,
+      itemBuilder: (context, i, item) {
+        return Container(
+          color: Colors.grey[300],
+          child: Center(child: Text('$item')),
+        );
+      },
+      listBuilder: (context, itemCount, itemBuilder) {
+        return GridView.builder(
+          itemBuilder: itemBuilder,
+          itemCount: itemCount,
+          padding: EdgeInsets.all(8),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3, mainAxisSpacing: 8, crossAxisSpacing: 8),
+        );
+      },
     );
   }
 
-  Widget buildCase(BuildContext context, FakePageDataProvider _controller) {
+  Widget buildList(FakePageDataProvider _controller) {
     return PagedListView<String>(
-      dataController: _controller,
+      controller: _controller,
       itemBuilder: (_, i, data) {
         return Text(data);
       },

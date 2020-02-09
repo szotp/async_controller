@@ -1,13 +1,12 @@
-import 'dart:async';
-
-import 'package:async/async.dart';
 import 'package:example/helpers.dart';
 import 'package:example/hooks_example.dart';
-import 'package:example/huge_list_page.dart';
 import 'package:example/paged_loading.dart';
 import 'package:example/refreshers_page.dart';
 import 'package:example/sort_and_search.dart';
 import 'package:flutter/material.dart';
+
+// ignore: implementation_imports
+import 'package:async_controller/src/debugging.dart';
 
 import 'async_button_example.dart';
 import 'failure_handling.dart';
@@ -18,7 +17,10 @@ import 'provider_example.dart';
 import 'pull_to_refresh.dart';
 import 'translator/translator_page.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  internalDebugLogEnabled = true;
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
@@ -27,30 +29,6 @@ class MyApp extends StatelessWidget {
       home: ExampleSwitcher(),
     );
   }
-}
-
-Stream<List<int>> lol() {
-  final ctr = StreamController<List<int>>();
-  ctr.add([1]);
-  ctr.addError('xxx');
-  ctr.close();
-  return ctr.stream;
-}
-
-Stream<int> lol2() {
-  return lol().expand((x) => x);
-}
-
-Future<List<int>> collect() async {
-  final stream = StreamQueue(lol2());
-  while (true) {
-    final got = await stream.take(1);
-    if (got.isEmpty) {
-      break;
-    }
-  }
-
-  return [];
 }
 
 class ExampleSwitcher extends StatelessWidget {
@@ -67,7 +45,6 @@ class ExampleSwitcher extends StatelessWidget {
       AsyncButtonPage(),
       RefreshersPage(),
       TranslatorPage(),
-      HugeListPage(),
       ProviderExamplePage(),
       HooksExamplePage(),
     ];

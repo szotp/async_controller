@@ -30,7 +30,7 @@ class AsyncFetchItem {
     status._runningFuture = fetch(status);
 
     return status._runningFuture.catchError((dynamic error) {
-      assert(error == cancelledError);
+      assert(error == cancelledError, '$error');
     });
   }
 }
@@ -83,6 +83,8 @@ abstract class AsyncController<T> extends ChangeNotifier
 
   Object get error => _error;
   bool get isLoading => _isLoading;
+
+  /// Number of finished fetches since last reset.
   int get version => _version;
 
   AsyncControllerState get state {
@@ -103,6 +105,10 @@ abstract class AsyncController<T> extends ChangeNotifier
       return;
     }
 
+    if (flags == SetNeedsRefreshFlag.ifNotLoading && isLoading) {
+      return;
+    }
+
     if (flags == SetNeedsRefreshFlag.reset) {
       reset();
       return;
@@ -110,7 +116,7 @@ abstract class AsyncController<T> extends ChangeNotifier
 
     _cancelCurrentFetch();
     if (hasListeners) {
-      internallyLoadAndNotify();
+      _internallyLoadAndNotify();
     }
   }
 
@@ -128,7 +134,7 @@ abstract class AsyncController<T> extends ChangeNotifier
     _isLoading = false;
 
     if (hasListeners) {
-      return internallyLoadAndNotify();
+      return _internallyLoadAndNotify();
     } else {
       return Future<void>.value();
     }
@@ -140,27 +146,20 @@ abstract class AsyncController<T> extends ChangeNotifier
   @protected
   Future<T> fetch(AsyncFetchItem status);
 
-  /// Runs the fetch method, and updates this controller.
-  /// Custom method can be provided for running, otherwise default fetch will be called.
-  /// If AsyncStatus gets cancelled, for example when users performs pull to refresh,
-  /// this method will ignore the result of fetch completely.
-  @protected
-  Future<void> internallyLoadAndNotify(
-      [AsyncControllerFetchExpanded<T> fetch]) {
+  Future<void> _internallyLoadAndNotify() {
     return AsyncFetchItem.runFetch((status) async {
       _cancelCurrentFetch(status);
 
-      if (!_isLoading) {
+      if (!_isLoading || error != null) {
         _isLoading = true;
+        _error = null;
 
         // microtask avoids crash that would happen when executing loadIfNeeded from build method
         Future.microtask(notifyListeners);
       }
 
-      final method = fetch ?? this.fetch;
-
       try {
-        final value = await status.ifNotCancelled(method(status));
+        final value = await status.ifNotCancelled(fetch(status));
 
         _value = value;
         _version += 1;
@@ -175,7 +174,7 @@ abstract class AsyncController<T> extends ChangeNotifier
           // ignore: avoid_print
           print('${this} got error:\n$e');
 
-          assert(e is! NoSuchMethodError);
+          assert(e is! NoSuchMethodError, '$e');
         }
 
         _error = e;
@@ -186,8 +185,17 @@ abstract class AsyncController<T> extends ChangeNotifier
     });
   }
 
+  /// Notify that currently held value changed without doing new fetch.
+  @protected
+  void internallyUpdateVersion() {
+    assert(_version > 0,
+        'Attempted to raise version on empty controller. Something needs to be loaded.');
+    _version++;
+    notifyListeners();
+  }
+
   Future<void> performUserInitiatedRefresh() {
-    return internallyLoadAndNotify();
+    return _internallyLoadAndNotify();
   }
 
   /// This future never fails - there is no need to catch.
@@ -195,7 +203,7 @@ abstract class AsyncController<T> extends ChangeNotifier
   /// If multiple widgets call this method, they will get the same future.
   Future<void> loadIfNeeded() {
     if (_lastFetch == null) {
-      internallyLoadAndNotify();
+      _internallyLoadAndNotify();
     }
     return _lastFetch._runningFuture;
   }
@@ -243,10 +251,10 @@ abstract class AsyncController<T> extends ChangeNotifier
 
   @override
   void dispose() {
-    super.dispose();
     if (hasListeners) {
       deactivate();
     }
+    super.dispose();
   }
 }
 
@@ -292,7 +300,7 @@ abstract class MappedAsyncController<BaseValue, MappedValue>
   /// Re-run fetch on existing cached base
   @protected
   void setNeedsLocalTransform() {
-    internallyLoadAndNotify();
+    _internallyLoadAndNotify();
   }
 }
 

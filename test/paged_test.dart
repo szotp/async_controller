@@ -2,9 +2,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:async_controller/async_controller.dart';
 
 class Controller extends PagedAsyncController<int> {
-  Controller() : super(10);
+  Controller() : super();
 
   static const largeCount = 10000000;
+
+  int get pageSize => 10;
 
   @override
   Future<PagedData<int>> fetchPage(int pageIndex) async {
@@ -24,18 +26,24 @@ class Controller extends PagedAsyncController<int> {
 void main() {
   test('fetch distant item', () async {
     final c = Controller();
+    c.addListener(() {});
     await c.loadIfNeeded();
 
     expect(c.totalCount, Controller.largeCount);
 
-    final t1 = c.getItem(Controller.largeCount - 1);
+    for (int i = 0; i < 1000; i++) {
+      final item = c.getItem(100);
 
-    expect(t1, null);
-    expect(c.isLoading, true);
+      if (c.isLoading) {
+        await c.loadIfNeeded();
+      }
 
-    await c.loadIfNeeded();
-    final t2 = c.getItem(Controller.largeCount - 1);
-    expect(t2, isNotNull);
+      if (item != null) {
+        break;
+      }
+    }
+
+    expect(c.loadedItemsCount, 110);
   });
 
   test('getItem must not notify', () async {

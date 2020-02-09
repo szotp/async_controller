@@ -69,9 +69,10 @@ void main() {
     final loader = await Controller.failed();
 
     loader.setNeedsRefresh(SetNeedsRefreshFlag.ifError);
-    await Future.microtask(() {});
+    await loader.waitUntilFinished();
     expect(loader.r.snapshots, <String>[
-      'noDataYet : failed',
+      'noDataYet : null',
+      'hasData   : 1',
     ]);
   });
 

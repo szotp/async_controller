@@ -14,7 +14,7 @@ dependencies:
   intl: ^0.15.8
   faker: ^1.1.1
   translator:
-  provider:
+  provider: ^4.0.0
   flutter_hooks:
 
 

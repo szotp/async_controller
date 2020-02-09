@@ -31,7 +31,7 @@ extension AsyncControllerExt<T> on AsyncController<T> {
   /// Returns reactive widget that builds when value returned from selector is different than before.
   /// The selector runs only when this controller changes.
   Widget buildAsyncProperty<P>({
-    P Function() selector,
+    @required P Function() selector,
     @required Widget Function(BuildContext, P) builder,
   }) {
     return AsyncPropertyBuilder<P>(

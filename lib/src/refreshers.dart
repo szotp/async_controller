@@ -7,6 +7,7 @@ enum SetNeedsRefreshFlag {
   always,
   ifError,
   reset,
+  ifNotLoading,
 }
 
 abstract class Refreshable {

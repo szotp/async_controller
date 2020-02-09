@@ -1,3 +1,9 @@
+## [1.0.0] - 09.12.2019
+* release stable version
+* fix few bugs
+* add better logging
+* rewrite paged loading
+
 ## [0.0.3] - 09.12.2019
 * fix missing removeListener
 
