@@ -50,34 +50,31 @@ abstract class PagedAsyncController<T> extends AsyncController<int> {
 
   Future<PagedData<T>> fetchPage(int pageIndex);
 
-  bool get canLoadMore => totalCount == null || loadedItemsCount < totalCount;
+  bool get hasMoreToLoad => totalCount == null || loadedItemsCount < totalCount;
 
+  /// Fetches more data, if there is anything to fetch and controller is not already loading it.
   void loadMoreIfPossible() {
-    if (canLoadMore) {
-      setNeedsRefresh(SetNeedsRefreshFlag.ifNotLoading);
+    if (hasMoreToLoad && !isLoading) {
+      performFetch(_fetchNext);
     }
-  }
-
-  @override
-  Future<void> performUserInitiatedRefresh() {
-    _nextPage = 0;
-    return super.performUserInitiatedRefresh();
   }
 
   @override
   Future<int> fetch(AsyncFetchItem status) async {
+    debugLog('Fetching page 0');
+    final run = await status.ifNotCancelled(fetchPage(0));
+    _items.clear();
+    _items.addAll(run.data);
+
+    _nextPage = 1;
+    return run.totalCount;
+  }
+
+  Future<int> _fetchNext(AsyncFetchItem status) async {
     final nextPage = _nextPage;
     debugLog('Fetching page $nextPage');
 
-    assert(canLoadMore || nextPage == 0);
-
     final run = await status.ifNotCancelled(fetchPage(nextPage));
-
-    // page 0 is special case, either first fetch, or complete reload
-    if (nextPage == 0) {
-      _items.clear();
-    }
-
     _items.addAll(run.data);
 
     _nextPage = nextPage + 1;
@@ -163,7 +160,7 @@ class PagedListView<T> extends StatelessWidget {
           return decoration.buildErrorTile(
             context,
             error,
-            () => controller.setNeedsRefresh(SetNeedsRefreshFlag.ifError),
+            () => controller.loadMoreIfPossible(),
             i,
           );
         } else {
@@ -175,16 +172,17 @@ class PagedListView<T> extends StatelessWidget {
 }
 
 /// Adds custom handling for empty content. Can be reused across the app.
+/// Automatically adds RefreshIndicator. Set addRefreshIndicator to false to disable it.
 class PagedListDecoration extends AsyncDataDecoration {
   const PagedListDecoration({
     this.noDataContent = const SizedBox(),
-    this.addRefreshIndicator = false,
+    this.addRefreshIndicator = true,
   });
 
   // Widget to display when there is zero items.
   final Widget noDataContent;
 
-  /// Whether refresh indicator should be inserted. It will call controller.refresh method.
+  /// Whether refresh indicator should be inserted. It will call controller.performUserInitiatedRefresh method.
   final bool addRefreshIndicator;
 
   static const empty = PagedListDecoration();

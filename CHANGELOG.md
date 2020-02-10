@@ -1,4 +1,8 @@
-## [1.0.0] - 09.12.2019
+## [1.0.1] - 10.02.2020
+* improve refreshers
+* reintroduce performFetch method
+
+## [1.0.0] - 09.02.2020
 * release stable version
 * fix few bugs
 * add better logging

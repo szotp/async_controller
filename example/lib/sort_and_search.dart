@@ -104,18 +104,20 @@ class _SortAndSearchPageState extends State<SortAndSearchPage> {
           ),
           Expanded(
             child: _controller.buildAsyncData(
-                builder: (context, data) {
-                  return ListView.builder(
-                    itemCount: data.length,
-                    itemBuilder: (context, i) {
-                      return ListTile(
-                        title: Text(data[i]),
-                      );
-                    },
-                  );
-                },
-                decorator: const PagedListDecoration(
-                    noDataContent: Text('I found nothing...'))),
+              builder: (context, data) {
+                return ListView.builder(
+                  itemCount: data.length,
+                  itemBuilder: (context, i) {
+                    return ListTile(
+                      title: Text(data[i]),
+                    );
+                  },
+                );
+              },
+              decorator: const PagedListDecoration(
+                noDataContent: Text('I found nothing...'),
+              ),
+            ),
           ),
         ],
       ),

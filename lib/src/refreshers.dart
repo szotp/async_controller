@@ -3,11 +3,21 @@ import 'dart:async';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/widgets.dart';
 
-enum SetNeedsRefreshFlag {
-  always,
-  ifError,
-  reset,
-  ifNotLoading,
+class SetNeedsRefreshFlag {
+  final bool flagOnlyIfError;
+  final bool flagReset;
+  final bool flagOnlyIfNotLoading;
+
+  static const always = SetNeedsRefreshFlag();
+  static const ifError = SetNeedsRefreshFlag(flagOnlyIfError: true);
+  static const reset = SetNeedsRefreshFlag(flagReset: true);
+  static const ifNotLoading = SetNeedsRefreshFlag(flagOnlyIfNotLoading: true);
+
+  const SetNeedsRefreshFlag({
+    this.flagOnlyIfError = false,
+    this.flagReset = false,
+    this.flagOnlyIfNotLoading = false,
+  });
 }
 
 abstract class Refreshable {
@@ -15,9 +25,13 @@ abstract class Refreshable {
 }
 
 abstract class LoadingRefresher {
+  /// Flag that will be used to refresh the controller.
+  SetNeedsRefreshFlag flag = SetNeedsRefreshFlag.always;
   Refreshable _controller;
 
-  void setNeedsRefresh(SetNeedsRefreshFlag flag) {
+  /// Performs setNeedsRefresh on controller with stored flag
+  @protected
+  void setNeedsRefresh() {
     _controller?.setNeedsRefresh(flag);
   }
 
@@ -40,7 +54,7 @@ class InForegroundRefresher extends LoadingRefresher
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      setNeedsRefresh(SetNeedsRefreshFlag.always);
+      setNeedsRefresh();
     }
   }
 
@@ -58,16 +72,12 @@ class StreamRefresher<T> extends LoadingRefresher {
 
   @override
   void activate() {
-    _sub = stream.listen(_onData);
+    _sub = stream.listen(onData);
   }
 
-  SetNeedsRefreshFlag shouldRefresh(T data) => SetNeedsRefreshFlag.always;
-
-  void _onData(T data) {
-    final flag = shouldRefresh(data);
-    if (flag != null) {
-      setNeedsRefresh(flag);
-    }
+  @protected
+  void onData(T data) {
+    setNeedsRefresh();
   }
 
   @override
@@ -77,20 +87,18 @@ class StreamRefresher<T> extends LoadingRefresher {
 }
 
 class OnReconnectedRefresher extends StreamRefresher<ConnectivityResult> {
-  OnReconnectedRefresher([this.flag = SetNeedsRefreshFlag.ifError])
-      : super(Connectivity().onConnectivityChanged);
+  OnReconnectedRefresher() : super(Connectivity().onConnectivityChanged) {
+    flag = SetNeedsRefreshFlag.ifError;
+  }
 
-  final SetNeedsRefreshFlag flag;
   bool _wasConnected = false;
 
   @override
-  SetNeedsRefreshFlag shouldRefresh(ConnectivityResult data) {
+  void onData(ConnectivityResult data) {
     final isConnected = data != ConnectivityResult.none;
     if (isConnected != _wasConnected) {
       _wasConnected = isConnected;
-      return flag;
-    } else {
-      return null;
+      setNeedsRefresh();
     }
   }
 }
@@ -104,7 +112,7 @@ class PeriodicRefresher extends LoadingRefresher {
   Timer _timer;
 
   void onTick(Timer timer) {
-    setNeedsRefresh(SetNeedsRefreshFlag.always);
+    setNeedsRefresh();
   }
 
   @override
@@ -134,6 +142,6 @@ class ListeningRefresher extends LoadingRefresher {
   }
 
   void onChange() {
-    setNeedsRefresh(SetNeedsRefreshFlag.always);
+    setNeedsRefresh();
   }
 }

@@ -101,11 +101,9 @@ abstract class AsyncController<T> extends ChangeNotifier
 
   @override
   void setNeedsRefresh(SetNeedsRefreshFlag flags) {
-    if (flags == SetNeedsRefreshFlag.ifError && error == null) {
-      return;
-    }
-
-    if (flags == SetNeedsRefreshFlag.ifNotLoading && isLoading) {
+    if (flags == null ||
+        flags.flagOnlyIfNotLoading && isLoading ||
+        flags.flagOnlyIfError && error == null) {
       return;
     }
 
@@ -116,7 +114,7 @@ abstract class AsyncController<T> extends ChangeNotifier
 
     _cancelCurrentFetch();
     if (hasListeners) {
-      _internallyLoadAndNotify();
+      performFetch();
     }
   }
 
@@ -134,7 +132,7 @@ abstract class AsyncController<T> extends ChangeNotifier
     _isLoading = false;
 
     if (hasListeners) {
-      return _internallyLoadAndNotify();
+      return performFetch();
     } else {
       return Future<void>.value();
     }
@@ -146,7 +144,9 @@ abstract class AsyncController<T> extends ChangeNotifier
   @protected
   Future<T> fetch(AsyncFetchItem status);
 
-  Future<void> _internallyLoadAndNotify() {
+  /// Immediately runs default fetch or provided func. Previous fetch will be cancelled.
+  @protected
+  Future<void> performFetch([AsyncControllerFetchExpanded<T> fetch]) {
     return AsyncFetchItem.runFetch((status) async {
       _cancelCurrentFetch(status);
 
@@ -159,7 +159,8 @@ abstract class AsyncController<T> extends ChangeNotifier
       }
 
       try {
-        final value = await status.ifNotCancelled(fetch(status));
+        final value =
+            await status.ifNotCancelled((fetch ?? this.fetch)(status));
 
         _value = value;
         _version += 1;
@@ -194,16 +195,18 @@ abstract class AsyncController<T> extends ChangeNotifier
     notifyListeners();
   }
 
+  /// Intended to use for pull to refresh.
   Future<void> performUserInitiatedRefresh() {
-    return _internallyLoadAndNotify();
+    return performFetch();
   }
 
+  /// Perform fetch if there is no data yet.
   /// This future never fails - there is no need to catch.
   /// If there is error during loading it will handled by the controller.
   /// If multiple widgets call this method, they will get the same future.
   Future<void> loadIfNeeded() {
     if (_lastFetch == null) {
-      _internallyLoadAndNotify();
+      performFetch();
     }
     return _lastFetch._runningFuture;
   }
@@ -300,7 +303,7 @@ abstract class MappedAsyncController<BaseValue, MappedValue>
   /// Re-run fetch on existing cached base
   @protected
   void setNeedsLocalTransform() {
-    _internallyLoadAndNotify();
+    performFetch();
   }
 }
 
