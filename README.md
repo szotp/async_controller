@@ -50,7 +50,7 @@ _controller.buildAsyncData(builder: builder: (_, data) {
 Example: [failure_handling.dart](example/lib/failure_handling.dart)
 
 ### Custom loading and error handling
-Loading are error handling widgets are created by AsyncDataDecoration. You may override their behavior by creating custom AsyncDataDecoration. The same decorator can then be used in every AsyncData in your app.
+Loading and error handling widgets are created by AsyncDataDecoration. You may override their behavior by creating custom AsyncDataDecoration. The same decorator can then be used in every AsyncData in your app.
 ```dart
 class CustomAsyncDataDecoration extends AsyncDataDecoration {
   @override
@@ -138,7 +138,7 @@ Example: [async_button_example.dart](example/lib/async_button_example.dart)
 
 ### Interaction with other packages
 
-AsyncController plays nicely with other. It implements ChangeNotifier and ValueListenable - classes commonly used inside Flutter. You can use it with any state management / dependency injection that you want. The example project includes samples for flutter_hooks and provider.
+AsyncController plays nicely with others. It implements ChangeNotifier and ValueListenable - classes commonly used inside Flutter. You can use it with any state management / dependency injection that you want. The example project includes samples for flutter_hooks and provider.
 
 Example 1: [hooks_example.dart](example/lib/hooks_example.dart)
 
