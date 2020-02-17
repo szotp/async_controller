@@ -231,6 +231,7 @@ abstract class AsyncController<T> extends ChangeNotifier
 
   @protected
   void deactivate() {
+    _cancelCurrentFetch();
     for (final b in _behaviors) {
       b.deactivate();
     }
@@ -312,4 +313,62 @@ abstract class FilteringAsyncController<Value>
     extends MappedAsyncController<List<Value>, List<Value>> {
   @override
   bool get hasData => super.hasData && value.isNotEmpty;
+}
+
+/// Provides the latest value from a stream.
+/// Automatically closes / recreates the stream when activated / deactivated.
+abstract class StreamAsyncControlelr<T> extends AsyncController<T> {
+  Stream<T> getStream(AsyncFetchItem status);
+
+  StreamSubscription<T> _sub;
+
+  Duration get renewAfter => null;
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  void _onData(T data) {
+    performFetch((_) => Future.value(data));
+  }
+
+  void _onError(dynamic error, stack) {
+    performFetch((_) => throw error);
+  }
+
+  void _onDone() {
+    final duration = renewAfter;
+    if (renewAfter != null) {
+      performFetch((item) async {
+        await item.ifNotCancelled(Future.delayed(duration));
+        return fetch(item);
+      });
+    }
+  }
+
+  @override
+  void deactivate() {
+    _sub?.cancel();
+    _sub = null;
+    super.deactivate();
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    if (_sub == null) {
+      performFetch();
+    }
+  }
+
+  @override
+  Future<T> fetch(AsyncFetchItem status) {
+    final stream = getStream(status);
+    _sub?.cancel();
+    _sub = stream.listen(_onData, onError: _onError, onDone: _onDone);
+
+    return Future.value(value);
+  }
 }

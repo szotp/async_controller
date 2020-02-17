@@ -30,7 +30,15 @@ class AsyncData<T> extends StatefulWidget {
   _AsyncDataState createState() => _AsyncDataState<T>();
 
   static _AsyncDataState of(BuildContext context) {
-    return context.findAncestorStateOfType<_AsyncDataState>();
+    final result = context.findAncestorStateOfType<_AsyncDataState>();
+    if (result == null && context is StatefulElement) {
+      final state = context.state;
+      if (state is _AsyncDataState) {
+        return state;
+      }
+    }
+
+    return result;
   }
 }
 

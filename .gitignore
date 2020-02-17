@@ -67,3 +67,4 @@ build/
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 example/ios/Flutter/flutter_export_environment.sh
 .flutter-plugins-dependencies
+Podfile.lock
