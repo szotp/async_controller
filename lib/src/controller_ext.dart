@@ -8,12 +8,20 @@ extension AsyncControllerExt<T> on AsyncController<T> {
   /// Provides AsyncSnapshot for compability with other widgets.
   /// It is usually better to use state property.
   AsyncSnapshot<T> get snapshot {
-    if (version > 0) {
-      return AsyncSnapshot.withData(ConnectionState.done, value);
-    } else if (error != null) {
-      return AsyncSnapshot.withError(ConnectionState.done, error);
+    ConnectionState connection;
+
+    if (isLoading) {
+      connection = ConnectionState.waiting;
     } else {
-      return const AsyncSnapshot.withData(ConnectionState.waiting, null);
+      connection = ConnectionState.done;
+    }
+
+    if (version > 0) {
+      return AsyncSnapshot.withData(connection, value);
+    } else if (error != null) {
+      return AsyncSnapshot.withError(connection, error);
+    } else {
+      return AsyncSnapshot.withData(connection, null);
     }
   }
 

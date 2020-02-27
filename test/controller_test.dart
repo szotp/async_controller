@@ -121,4 +121,11 @@ void main() {
     expect(loader.error, 'failed');
     expect(loader.state, AsyncControllerState.failed);
   });
+
+  test('test duration', () async {
+    final loader = AsyncController<int>.method(() async => 1);
+    await loader.loadIfNeeded();
+
+    expect(loader.lastFetchDuration, greaterThan(Duration.zero));
+  });
 }

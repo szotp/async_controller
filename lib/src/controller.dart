@@ -87,6 +87,9 @@ abstract class AsyncController<T> extends ChangeNotifier
   /// Number of finished fetches since last reset.
   int get version => _version;
 
+  Duration _lastFetchDuration;
+  Duration get lastFetchDuration => _lastFetchDuration;
+
   AsyncControllerState get state {
     if (hasData) {
       return AsyncControllerState.hasData;
@@ -149,6 +152,7 @@ abstract class AsyncController<T> extends ChangeNotifier
   Future<void> performFetch([AsyncControllerFetchExpanded<T> fetch]) {
     return AsyncFetchItem.runFetch((status) async {
       _cancelCurrentFetch(status);
+      final start = DateTime.now();
 
       if (!_isLoading || error != null) {
         _isLoading = true;
@@ -181,6 +185,7 @@ abstract class AsyncController<T> extends ChangeNotifier
         _error = e;
       }
 
+      _lastFetchDuration = DateTime.now().difference(start);
       _isLoading = false;
       notifyListeners();
     });
