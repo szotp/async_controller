@@ -1,3 +1,7 @@
+## [1.0.2] - 10.02.2020
+* fix snapshot getter
+* add last fetch timing
+
 ## [1.0.1] - 10.02.2020
 * improve refreshers
 * reintroduce performFetch method
