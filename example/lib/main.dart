@@ -4,6 +4,7 @@ import 'package:example/paged_loading.dart';
 import 'package:example/refreshers_page.dart';
 import 'package:example/sort_and_search.dart';
 import 'package:example/stream.dart';
+import 'package:example/updating_example.dart';
 import 'package:flutter/material.dart';
 
 // ignore: implementation_imports
@@ -49,6 +50,7 @@ class ExampleSwitcher extends StatelessWidget {
       ProviderExamplePage(),
       HooksExamplePage(),
       StreamExamplePage(),
+      UpdatingExample(),
     ];
 
     return Scaffold(

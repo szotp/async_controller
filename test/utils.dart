@@ -6,9 +6,9 @@ class Controller extends AsyncController<int> {
 
   bool shouldFail = false;
 
-  Recorder<int> _recorder;
-  Recorder<int> get r {
-    return _recorder ??= Recorder<int>(this);
+  Recorder _recorder;
+  Recorder get r {
+    return _recorder ??= Recorder(this);
   }
 
   static Future<Controller> failed() async {
@@ -49,14 +49,29 @@ class Controller extends AsyncController<int> {
   Future<void> pump() => Future.microtask(() {});
 }
 
-class Recorder<T> {
-  Recorder(this.input) {
+class Recorder {
+  factory Recorder(AsyncController input) {
+    String takeSnapshot() {
+      final s = input.state;
+
+      var name = describeEnum(s);
+      name = name.padRight(10);
+
+      final snapshot = '$name: ${input.value ?? input.error}';
+
+      return snapshot;
+    }
+
+    return Recorder.custom(input, takeSnapshot);
+  }
+
+  Recorder.custom(this.input, this.snapshotter) {
     input.addListener(onChanged);
     onChanged();
   }
 
-  final AsyncController<T> input;
-  final List<T> data = <T>[];
+  final Listenable input;
+  final String Function() snapshotter;
   final List<String> snapshots = <String>[];
 
   void dispose() {
@@ -68,13 +83,7 @@ class Recorder<T> {
   }
 
   void onChanged() {
-    data.add(input.value);
-    final s = input.state;
-
-    var name = describeEnum(s);
-    name = name.padRight(10);
-
-    final snapshot = '$name: ${input.value ?? input.error}';
+    final snapshot = snapshotter();
 
     if (snapshots.isNotEmpty && snapshots.last == snapshot) {
       return;
