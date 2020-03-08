@@ -26,6 +26,13 @@ abstract class UpdatingController<P> extends ChangeNotifier {
 
   bool needsUpdate(String key) => _toUpdate.contains(key);
 
+  /// Replaces contained data without triggering an update
+  @protected
+  void replaceData(P data) {
+    _data = data;
+    notifyListeners();
+  }
+
   Future<void> ensureUpdatedOrThrow() async {
     await _core.waitIfNeeded();
     if (hasUpdates) {
