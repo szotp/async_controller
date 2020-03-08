@@ -11,7 +11,6 @@ import 'refreshers.dart';
 /// If performFetch is called when old fetch is running, the old fetch will be canceled
 class AsyncFetchCore {
   AsyncFetchItem _current;
-  AsyncFetchItem _last;
 
   bool get isRunning => _current != null;
 
@@ -19,7 +18,7 @@ class AsyncFetchCore {
     _current?._isCancelled = true;
 
     final status = AsyncFetchItem();
-    _last = _current = status;
+    _current = status;
 
     try {
       status._runningFuture = fetch(status);
@@ -98,6 +97,7 @@ abstract class AsyncController<T> extends ChangeNotifier
     if (initialValue != null) {
       _value = initialValue;
       _version = 1;
+      _needsRefresh = false;
     }
   }
 
@@ -113,6 +113,7 @@ abstract class AsyncController<T> extends ChangeNotifier
   T _value;
   Object _error;
   bool _isLoading = false;
+  bool _needsRefresh = true;
 
   /// Behaviors dictate when loading controller needs to reload.
   final List<LoadingRefresher> _behaviors = [];
@@ -155,6 +156,7 @@ abstract class AsyncController<T> extends ChangeNotifier
     }
 
     _core.cancel();
+    _needsRefresh = true;
     if (hasListeners) {
       performFetch();
     }
@@ -167,6 +169,7 @@ abstract class AsyncController<T> extends ChangeNotifier
     _value = null;
     _error = null;
     _isLoading = false;
+    _needsRefresh = true;
 
     if (hasListeners) {
       return performFetch();
@@ -200,10 +203,10 @@ abstract class AsyncController<T> extends ChangeNotifier
       try {
         final value =
             await status.ifNotCancelled((fetch ?? this.fetch)(status));
-
         _value = value;
         _version += 1;
         _error = null;
+        _needsRefresh = false;
       } catch (e) {
         if (e == AsyncFetchItem.cancelledError) {
           return;
@@ -245,11 +248,15 @@ abstract class AsyncController<T> extends ChangeNotifier
   /// If there is error during loading it will handled by the controller.
   /// If multiple widgets call this method, they will get the same future.
   Future<void> loadIfNeeded() {
-    if (_core._last != null && !_core._last.isCancelled) {
-      return _core._last._runningFuture;
+    if (_core.isRunning) {
+      return _core._current._runningFuture;
     }
 
-    return performFetch();
+    if (_needsRefresh) {
+      return performFetch();
+    } else {
+      return Future.value();
+    }
   }
 
   /// Adds loading refresher that will have capability to trigger a reload of controller.

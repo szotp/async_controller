@@ -10,7 +10,7 @@ void main() {
     final loader = Controller();
     expect(loader.value, null);
     expect(loader.snapshot,
-        const AsyncSnapshot<int>.nothing().inState(ConnectionState.waiting));
+        const AsyncSnapshot<int>.nothing().inState(ConnectionState.done));
   });
 
   test('test loads on listener', () {
