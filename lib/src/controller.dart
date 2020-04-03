@@ -103,7 +103,8 @@ abstract class AsyncController<T> extends ChangeNotifier
   }
 
   @override
-  void setNeedsRefresh(SetNeedsRefreshFlag flags) {
+  void setNeedsRefresh(
+      [SetNeedsRefreshFlag flags = SetNeedsRefreshFlag.always]) {
     if (flags == null ||
         flags.flagOnlyIfNotLoading && isLoading ||
         flags.flagOnlyIfError && error == null) {
