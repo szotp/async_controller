@@ -157,7 +157,10 @@ abstract class AsyncController<T> extends ChangeNotifier
 
       if (!_isLoading || error != null) {
         _isLoading = true;
-        _error = null;
+
+        if (clearsErrorOnStart) {
+          _error = null;
+        }
 
         // microtask avoids crash that would happen when executing loadIfNeeded from build method
         Future.microtask(notifyListeners);
@@ -266,6 +269,11 @@ abstract class AsyncController<T> extends ChangeNotifier
     }
     super.dispose();
   }
+
+  /// If true (default), error from previous fetch will be cleared at the start of new fetch
+  /// If false, error will remain until fetch is completed.
+  @protected
+  bool get clearsErrorOnStart => true;
 }
 
 class _SimpleAsyncController<T> extends AsyncController<T> {
