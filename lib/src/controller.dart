@@ -173,7 +173,7 @@ abstract class AsyncController<T> extends ChangeNotifier
         _value = value;
         _version += 1;
         _error = null;
-      } catch (e) {
+      } catch (e, trace) {
         if (e == AsyncFetchItem.cancelledError) {
           return;
         }
@@ -181,9 +181,11 @@ abstract class AsyncController<T> extends ChangeNotifier
         if (kDebugMode && AsyncController.debugCheckErrors) {
           // this is disabled in production code and behind a flag
           // ignore: avoid_print
-          print('${this} got error:\n$e');
+          print('${this} got error:\n$e $trace');
 
-          assert(e is! NoSuchMethodError, '$e');
+          if (e is NoSuchMethodError) {
+            rethrow;
+          }
         }
 
         _error = e;
