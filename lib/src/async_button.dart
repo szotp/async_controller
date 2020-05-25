@@ -1,3 +1,4 @@
+import 'package:async_controller/src/async_theme.dart';
 import 'package:flutter/material.dart';
 
 typedef AsyncButtonFunction = Future<void> Function();
@@ -37,10 +38,9 @@ class AsyncButton extends StatefulWidget {
   AsyncButtonState createState() => AsyncButtonState();
 
   void showError(Object error, BuildContext context) {
-    final scaffold = Scaffold.of(context);
-    scaffold.showSnackBar(SnackBar(
-      content: Text(error.toString()),
-    ));
+    final theme = DefaultAsyncDataDecoration.of(context);
+
+    theme.showError(context, error);
   }
 
   Widget buildLoadingIndicator(Color loadingColor) {
