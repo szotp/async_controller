@@ -9,25 +9,29 @@ class AsyncButtonSettings {
 
   final BuildContext context;
   final Opacity child;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
-  Color loadingColor;
+  Color? loadingColor;
 }
 
 class AsyncButton extends StatefulWidget {
+  static Widget _defaultBuilder(AsyncButtonSettings settings) {
+    return TextButton(onPressed: settings.onPressed, child: settings.child);
+  }
+
   const AsyncButton({
-    Key key,
-    @required this.onPressed,
-    @required this.child,
-    this.builder,
+    Key? key,
+    required this.onPressed,
+    required this.child,
+    this.builder = _defaultBuilder,
     this.loadingColor,
     this.lockInterface = true,
   }) : super(key: key);
 
-  final AsyncButtonFunction onPressed;
+  final AsyncButtonFunction? onPressed;
   final Widget child;
   final AsyncButtonBuilder builder;
-  final Color loadingColor;
+  final Color? loadingColor;
 
   /// Should the UI be completely locked when operation is pending? Default: true.
   /// Note: if false, this button will still support only one execution at a time
@@ -43,8 +47,8 @@ class AsyncButton extends StatefulWidget {
     theme.showError(context, error);
   }
 
-  Widget buildLoadingIndicator(Color loadingColor) {
-    Animation<Color> valueColor;
+  Widget buildLoadingIndicator(Color? loadingColor) {
+    Animation<Color>? valueColor;
 
     final loadingColorMerged = loadingColor ?? this.loadingColor;
 
@@ -103,7 +107,7 @@ class AsyncButtonState extends State<AsyncButton> {
     });
   }
 
-  VoidCallback get onPressed {
+  VoidCallback? get onPressed {
     if (widget.onPressed != null) {
       return execute;
     } else {
@@ -116,10 +120,10 @@ class AsyncButtonState extends State<AsyncButton> {
       return;
     }
 
-    OverlayEntry _entry;
+    OverlayEntry? _entry;
 
     if (widget.lockInterface) {
-      final overlay = Overlay.of(context);
+      final overlay = Overlay.of(context)!;
       _entry = OverlayEntry(builder: widget.overlayContent);
       overlay.insert(_entry);
     }
@@ -127,7 +131,7 @@ class AsyncButtonState extends State<AsyncButton> {
     try {
       _update(true);
 
-      await widget.onPressed();
+      await widget.onPressed?.call();
     } catch (e) {
       if (mounted) {
         widget.showError(e, context);

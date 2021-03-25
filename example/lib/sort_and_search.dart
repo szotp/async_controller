@@ -10,7 +10,7 @@ class SearchingController extends FilteringAsyncController<String> {
   @override
   Future<List<String>> fetchBase() async {
     await Future<void>.delayed(Duration(seconds: 1));
-    const faker = Faker();
+    final faker = Faker();
     return List.generate(100, (_) => faker.person.name());
   }
 
@@ -20,7 +20,7 @@ class SearchingController extends FilteringAsyncController<String> {
 
     // apply searching
     if (_searchText?.isNotEmpty == true) {
-      final searchingFor = _searchText.toLowerCase();
+      final searchingFor = _searchText!.toLowerCase();
       bool shouldRemove(String x) {
         return !x.toLowerCase().contains(searchingFor);
       }
@@ -39,7 +39,7 @@ class SearchingController extends FilteringAsyncController<String> {
     return result;
   }
 
-  String _searchText;
+  String? _searchText;
   Sorting sorting = Sorting.ascending;
 
   void setText(String value) {
@@ -85,7 +85,7 @@ class _SortAndSearchPageState extends State<SortAndSearchPage> {
               ),
               Align(
                 alignment: Alignment.centerRight,
-                child: FlatButton(
+                child: TextButton(
                   onPressed: _controller.toggleSorting,
                   child: _controller.buildAsyncProperty<Sorting>(
                     selector: () => _controller.sorting,

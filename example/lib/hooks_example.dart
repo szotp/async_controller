@@ -11,7 +11,7 @@ class HooksExamplePage extends HookWidget with ExamplePage {
 
   @override
   Widget build(BuildContext context) {
-    final loader = useNewChangeNotifier(() => AsyncController.method(fetch));
+    final loader = useNewChangeNotifier(() => AsyncController.method(fetch))!;
     return Scaffold(
       appBar: buildAppBar(),
       body: loader.buildAsyncData(builder: (_, data) {
@@ -25,14 +25,14 @@ class HooksExamplePage extends HookWidget with ExamplePage {
 }
 
 /// Creates the provided notifier once, and then disposes it when appropriate.
-T useNewChangeNotifier<T extends ChangeNotifier>(T Function() builder) {
-  return Hook.use(_NewChangeNotifierHook(builder: builder));
+T? useNewChangeNotifier<T extends ChangeNotifier>(T Function() builder) {
+  return use(_NewChangeNotifierHook(builder: builder));
 }
 
-class _NewChangeNotifierHook<T extends ChangeNotifier> extends Hook<T> {
+class _NewChangeNotifierHook<T extends ChangeNotifier> extends Hook<T?> {
   const _NewChangeNotifierHook({this.builder});
 
-  final T Function() builder;
+  final T Function()? builder;
 
   @override
   _NewChangeNotifierHookState<T> createState() =>
@@ -40,22 +40,22 @@ class _NewChangeNotifierHook<T extends ChangeNotifier> extends Hook<T> {
 }
 
 class _NewChangeNotifierHookState<T extends ChangeNotifier>
-    extends HookState<T, _NewChangeNotifierHook<T>> {
-  T notifier;
+    extends HookState<T?, _NewChangeNotifierHook<T>> {
+  T? notifier;
 
   @override
   void initHook() {
     super.initHook();
-    notifier = hook.builder();
+    notifier = hook.builder!();
   }
 
   @override
-  T build(BuildContext context) {
+  T? build(BuildContext context) {
     return notifier;
   }
 
   @override
   void dispose() {
-    notifier.dispose();
+    notifier!.dispose();
   }
 }

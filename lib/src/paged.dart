@@ -31,11 +31,11 @@ abstract class PagedAsyncController<T> extends AsyncController<int> {
   /// Widget uses this property to determine curently visible amount of items.
   int get loadedItemsCount => _items.length;
 
-  int get totalCount => value;
+  int? get totalCount => value;
 
   /// If data for given item is not loaded, getItem will return null and schedule a page load.
   /// After page is loaded, notifyListeners will be called, which will trigger listener widget to reload.
-  T getItem(int itemIndex) {
+  T? getItem(int itemIndex) {
     if (itemIndex < _items.length) {
       if (itemIndex > (_items.length - loadingMargin)) {
         loadMoreIfPossible();
@@ -50,7 +50,10 @@ abstract class PagedAsyncController<T> extends AsyncController<int> {
 
   Future<PagedData<T>> fetchPage(int pageIndex);
 
-  bool get hasMoreToLoad => totalCount == null || loadedItemsCount < totalCount;
+  bool get hasMoreToLoad {
+    final totalCount = this.totalCount;
+    return totalCount == null || loadedItemsCount < totalCount;
+  }
 
   /// Fetches more data, if there is anything to fetch and controller is not already loading it.
   void loadMoreIfPossible() {
@@ -117,9 +120,9 @@ class PagedListView<T> extends StatelessWidget {
   }
 
   const PagedListView({
-    Key key,
-    @required this.controller,
-    @required this.itemBuilder,
+    Key? key,
+    required this.controller,
+    required this.itemBuilder,
     this.listBuilder = buildSimpleList,
     this.decoration = PagedListDecoration.empty,
   }) : super(key: key);
@@ -143,11 +146,11 @@ class PagedListView<T> extends StatelessWidget {
 
   @protected
   int getItemCount() {
-    if (controller.totalCount != null &&
-        controller.loadedItemsCount < controller.totalCount) {
+    final totalCount = controller.totalCount;
+    if (totalCount != null && controller.loadedItemsCount < totalCount) {
       return controller.loadedItemsCount + 1;
     } else {
-      return controller.totalCount;
+      return controller.totalCount ?? 0;
     }
   }
 

@@ -88,7 +88,7 @@ void main() {
 }
 
 class FakeTimer implements Timer {
-  Function(Timer timer) f;
+  Function(Timer timer)? f;
 
   @override
   void cancel() {
@@ -111,7 +111,7 @@ class FakeTimer implements Timer {
 
   void fakeTick() {
     tick++;
-    f(this);
+    f!(this);
   }
 
   Timer createPeriodicTimer(Zone self, ZoneDelegate parent, Zone zone,

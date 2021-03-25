@@ -8,9 +8,9 @@ class DefaultAsyncDataDecoration extends StatelessWidget {
   final Widget child;
 
   const DefaultAsyncDataDecoration({
-    Key key,
-    @required this.data,
-    @required this.child,
+    Key? key,
+    required this.data,
+    required this.child,
   }) : super(key: key);
 
   static AsyncDataDecoration of(BuildContext context) =>

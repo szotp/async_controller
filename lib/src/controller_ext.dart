@@ -16,17 +16,19 @@ extension AsyncControllerExt<T> on AsyncController<T> {
       connection = ConnectionState.done;
     }
 
-    if (version > 0) {
+    final value = this.value;
+
+    if (version > 0 && value != null) {
       return AsyncSnapshot.withData(connection, value);
     } else if (error != null) {
-      return AsyncSnapshot.withError(connection, error);
+      return AsyncSnapshot.withError(connection, error!);
     } else {
-      return AsyncSnapshot.withData(connection, null);
+      return AsyncSnapshot.waiting();
     }
   }
 
   AsyncData<T> buildAsyncData({
-    @required AsyncDataFunction<T> builder,
+    required AsyncDataFunction<T> builder,
     AsyncDataDecoration decorator = const AsyncDataDecoration(),
   }) {
     return AsyncData(
@@ -39,8 +41,8 @@ extension AsyncControllerExt<T> on AsyncController<T> {
   /// Returns reactive widget that builds when value returned from selector is different than before.
   /// The selector runs only when this controller changes.
   Widget buildAsyncProperty<P>({
-    @required P Function() selector,
-    @required Widget Function(BuildContext, P) builder,
+    required P Function() selector,
+    required Widget Function(BuildContext, P) builder,
   }) {
     return AsyncPropertyBuilder<P>(
       selector: selector,
@@ -49,7 +51,8 @@ extension AsyncControllerExt<T> on AsyncController<T> {
     );
   }
 
-  Widget buildAsyncVisibility({bool Function() selector, Widget child}) {
+  Widget buildAsyncVisibility(
+      {required bool Function() selector, required Widget child}) {
     return AsyncPropertyBuilder<bool>(
       selector: selector,
       listenable: this,
@@ -63,8 +66,8 @@ extension AsyncControllerExt<T> on AsyncController<T> {
   }
 
   Widget buildAsyncOpacity({
-    bool Function() selector,
-    Widget child,
+    required bool Function() selector,
+    required Widget child,
     double opacityForTrue = 1.0,
     double opacityForFalse = 0.5,
   }) {

@@ -57,7 +57,7 @@ class _AsyncButtonPageState extends State<AsyncButtonPage> {
               // AsyncButton accepts async onPressed method and handles it
               onPressed: () => Future.delayed(const Duration(seconds: 1)),
               // Through builder method we can support any kind of button
-              builder: (x) => FlatButton(
+              builder: (x) => TextButton(
                 onPressed: x.onPressed,
                 child: x.child,
               ),
@@ -73,9 +73,10 @@ class _AsyncButtonPageState extends State<AsyncButtonPage> {
   Widget buttonStyleOne(AsyncButtonSettings settings) {
     return SizedBox(
       width: 200,
-      child: OutlineButton(
+      child: OutlinedButton(
         onPressed: settings.onPressed,
-        color: Colors.red,
+        style:
+            ButtonStyle(foregroundColor: MaterialStateProperty.all(Colors.red)),
         child: settings.child,
       ),
     );
@@ -84,10 +85,12 @@ class _AsyncButtonPageState extends State<AsyncButtonPage> {
   Widget buttonStyleTwo(AsyncButtonSettings settings) {
     return SizedBox(
       width: 200,
-      child: FlatButton(
+      child: TextButton(
         onPressed: settings.onPressed,
-        color: Colors.orange,
-        textColor: Colors.white,
+        style: ButtonStyle(
+          backgroundColor: MaterialStateProperty.all(Colors.orange),
+          foregroundColor: MaterialStateProperty.all(Colors.white),
+        ),
         child: settings.child,
       ),
     );

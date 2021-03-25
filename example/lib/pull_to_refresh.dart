@@ -31,7 +31,7 @@ class _PullToRefreshPageState extends State<PullToRefreshPage> {
       appBar: widget.buildAppBar(),
       body: Column(
         children: <Widget>[
-          FlatButton(onPressed: controller.reset, child: Text('Reset')),
+          TextButton(onPressed: controller.reset, child: Text('Reset')),
           Expanded(
             child: RefreshIndicator(
               /// Calling controller.refresh in RefreshIndicator is all you need to implement pull to refresh

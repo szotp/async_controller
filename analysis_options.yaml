@@ -10,3 +10,6 @@ linter:
 
     # statics are better because they can be used as callbacks
     prefer_constructors_over_static_methods: false 
+
+    # Ii prefer to sort by importance
+    sort_pub_dependencies: false
