@@ -27,7 +27,7 @@ abstract class Refreshable {
 abstract class LoadingRefresher {
   /// Flag that will be used to refresh the controller.
   SetNeedsRefreshFlag flag = SetNeedsRefreshFlag.always;
-  Refreshable _controller;
+  Refreshable? _controller;
 
   /// Performs setNeedsRefresh on controller with stored flag
   @protected
@@ -48,7 +48,7 @@ class InForegroundRefresher extends LoadingRefresher
     with WidgetsBindingObserver {
   @override
   void activate() {
-    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance!.addObserver(this);
   }
 
   @override
@@ -60,7 +60,7 @@ class InForegroundRefresher extends LoadingRefresher
 
   @override
   void deactivate() {
-    WidgetsBinding.instance.removeObserver(this);
+    WidgetsBinding.instance!.removeObserver(this);
   }
 }
 
@@ -68,7 +68,7 @@ class StreamRefresher<T> extends LoadingRefresher {
   StreamRefresher(this.stream);
 
   final Stream<T> stream;
-  StreamSubscription<T> _sub;
+  late StreamSubscription<T> _sub;
 
   @override
   void activate() {
@@ -105,11 +105,11 @@ class OnReconnectedRefresher extends StreamRefresher<ConnectivityResult> {
 
 /// Updates loading controller every given period.
 class PeriodicRefresher extends LoadingRefresher {
-  PeriodicRefresher(this.period) : assert(period != null);
+  PeriodicRefresher(this.period);
 
   final Duration period;
 
-  Timer _timer;
+  Timer? _timer;
 
   void onTick(Timer timer) {
     setNeedsRefresh();

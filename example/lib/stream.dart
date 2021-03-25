@@ -78,7 +78,7 @@ class _StreamExamplePageState extends State<StreamExamplePage> {
   }
 
   Widget buildContent(BuildContext context, String string) {
-    final ctrl = AsyncData.of(context).controller;
+    final ctrl = AsyncData.of(context)!.controller;
     return ctrl.buildAsyncOpacity(
       selector: () => ctrl.error == null,
       child: Text(string, style: TextStyle(fontSize: 30)),
@@ -92,16 +92,16 @@ class _StreamExamplePageState extends State<StreamExamplePage> {
       body: Center(
         child: Column(
           children: <Widget>[
-            FlatButton(
+            TextButton(
               onPressed: refreshAll,
               child:
                   Text('Refresh (restarts streams without losing last value)'),
             ),
-            FlatButton(
+            TextButton(
               onPressed: resetAll,
               child: Text('Reset (clears everything)'),
             ),
-            FlatButton(
+            TextButton(
               onPressed: toggle,
               child: Text(
                   'Toggle activation (restarts stream after becoming visible)'),

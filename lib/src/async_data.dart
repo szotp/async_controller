@@ -12,9 +12,9 @@ typedef AsyncDataFunction<T> = Widget Function(BuildContext context, T data);
 class AsyncData<T> extends StatefulWidget {
   /// Creates AsyncData with already existing controller.
   const AsyncData({
-    Key key,
-    @required this.controller,
-    @required this.builder,
+    Key? key,
+    required this.controller,
+    required this.builder,
     this.decorator = const AsyncDataDecoration(),
   }) : super(key: key);
 
@@ -29,7 +29,7 @@ class AsyncData<T> extends StatefulWidget {
   @override
   _AsyncDataState createState() => _AsyncDataState<T>();
 
-  static _AsyncDataState of(BuildContext context) {
+  static _AsyncDataState? of(BuildContext context) {
     final result = context.findAncestorStateOfType<_AsyncDataState>();
     if (result == null && context is StatefulElement) {
       final state = context.state;
@@ -43,7 +43,7 @@ class AsyncData<T> extends StatefulWidget {
 }
 
 class _AsyncDataState<T> extends State<AsyncData<T>> {
-  int _version;
+  int _version = 0;
 
   AsyncController<T> get controller => widget.controller;
 
@@ -84,7 +84,12 @@ class _AsyncDataState<T> extends State<AsyncData<T>> {
     Widget buildContent() {
       switch (widget.controller.state) {
         case AsyncControllerState.hasData:
-          return widget.builder(context, widget.controller.value);
+          final data = widget.controller.value;
+          assert(data != null);
+          if (data == null) {
+            return SizedBox();
+          }
+          return widget.builder(context, data);
         case AsyncControllerState.failed:
           return widget.decorator.buildError(context, widget.controller.error,
               widget.controller.performUserInitiatedRefresh);
@@ -93,9 +98,6 @@ class _AsyncDataState<T> extends State<AsyncData<T>> {
         case AsyncControllerState.noData:
           return widget.decorator.buildNoData(context);
       }
-
-      assert(false, 'Unknown state');
-      return widget.decorator.buildNoData(context);
     }
 
     final child = buildContent();
@@ -107,22 +109,40 @@ class _AsyncDataState<T> extends State<AsyncData<T>> {
 class AsyncDataDecoration {
   const AsyncDataDecoration();
 
-  factory AsyncDataDecoration.customized({Widget noData}) {
+  factory AsyncDataDecoration.customized({Widget? noData}) {
     return _CustomizedAsyncDataDecoration(noData);
+  }
+
+  /// Constructs widget (usually Text) to describe given error
+  Widget buildErrorDescription(BuildContext context, dynamic error) {
+    return Text(error.toString());
   }
 
   /// There was error during fetch, we don't data to show so we may show error with try again button.
   Widget buildError(
       BuildContext context, dynamic error, VoidCallback tryAgain) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Text(error.toString()),
-          IconButton(icon: Icon(Icons.refresh), onPressed: tryAgain),
-        ],
+    final errorWidget = buildErrorDescription(context, error);
+
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            errorWidget,
+            IconButton(icon: Icon(Icons.refresh), onPressed: tryAgain),
+          ],
+        ),
       ),
     );
+  }
+
+  /// Shows error after AsyncButton failed.
+  /// By default, a snackbar.
+  void showError(BuildContext context, Object error) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: buildErrorDescription(context, error),
+    ));
   }
 
   /// There is no data because it was not loaded yet.
@@ -145,10 +165,10 @@ class AsyncDataDecoration {
 
 class _CustomizedAsyncDataDecoration extends AsyncDataDecoration {
   _CustomizedAsyncDataDecoration(this.customNoData);
-  final Widget customNoData;
+  final Widget? customNoData;
 
   @override
   Widget buildNoData(BuildContext context) {
-    return customNoData;
+    return customNoData ?? SizedBox();
   }
 }

@@ -16,19 +16,19 @@ class FakePageDataProvider extends PagedAsyncController<String> {
   @override
   final int totalCount;
   final int errorChance;
-  final int errorChanceOnFirstPage;
+  final int? errorChanceOnFirstPage;
 
   @override
   Future<PagedData<String>> fetchPage(int pageIndex) async {
     final index = pageSize * pageIndex;
     await Future<void>.delayed(Duration(milliseconds: 500));
 
-    var chance = errorChance;
+    int? chance = errorChance;
     if (pageIndex == 0 && errorChanceOnFirstPage != null) {
       chance = errorChanceOnFirstPage;
     }
 
-    if (chance > Random().nextInt(100)) {
+    if (chance! > Random().nextInt(100)) {
       throw 'Random failure';
     }
 
@@ -59,15 +59,14 @@ class PagedLoadingPage extends StatefulWidget with ExamplePage {
 class _PagedLoadingPageState extends State<PagedLoadingPage> {
   final _decorator = PagedListDecoration(
     noDataContent: Text('Sorry, no data'),
-    addRefreshIndicator: true,
   );
 
   CasePickerItem buildCase(String title, FakePageDataProvider provider,
-      [Widget Function(FakePageDataProvider) builder]) {
+      [Widget Function(FakePageDataProvider)? builder]) {
     return CasePickerItem(title, (context) => (builder ?? buildList)(provider));
   }
 
-  List<CasePickerItem> cases;
+  List<CasePickerItem>? cases;
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +88,7 @@ class _PagedLoadingPageState extends State<PagedLoadingPage> {
   Widget buildGridExample(FakePageDataProvider provider) {
     return PagedListView(
       controller: provider,
-      itemBuilder: (context, i, item) {
+      itemBuilder: (context, i, dynamic item) {
         return Container(
           color: Colors.grey[300],
           child: Center(child: Text('$item')),

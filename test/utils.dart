@@ -6,7 +6,7 @@ class Controller extends AsyncController<int> {
 
   bool shouldFail = false;
 
-  Recorder<int> _recorder;
+  Recorder<int>? _recorder;
   Recorder<int> get r {
     return _recorder ??= Recorder<int>(this);
   }
@@ -56,7 +56,7 @@ class Recorder<T> {
   }
 
   final AsyncController<T> input;
-  final List<T> data = <T>[];
+  final List<T?> data = <T>[];
   final List<String> snapshots = <String>[];
 
   void dispose() {

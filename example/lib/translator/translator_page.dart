@@ -10,18 +10,18 @@ class TranslatorController extends AsyncController<String> {
 
   Duration get delayToRefresh => Duration(seconds: 1);
 
-  String _input;
+  String? _input;
 
   void setInput(String newValue) {
     _input = newValue;
-    setNeedsRefresh(SetNeedsRefreshFlag.always);
+    setNeedsRefresh();
   }
 
   bool isTranslating = false;
 
   @override
   Future<String> fetch(AsyncFetchItem status) async {
-    if (_input == null || _input.length < 3) {
+    if (_input == null || _input!.length < 3) {
       return Future.value();
     }
 
@@ -30,7 +30,8 @@ class TranslatorController extends AsyncController<String> {
     try {
       isTranslating = true;
       notifyListeners();
-      return await _service.translate(_input);
+      final translation = await _service.translate(_input!);
+      return translation.text;
     } finally {
       isTranslating = false;
       notifyListeners();
@@ -72,7 +73,7 @@ class _TranslatorPageState extends State<TranslatorPage> {
               child: _data.buildAsyncData(
                 builder: (_, output) {
                   return Text(
-                    output ?? '',
+                    output,
                     style: TextStyle(fontSize: 30),
                   );
                 },

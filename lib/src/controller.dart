@@ -23,13 +23,13 @@ class AsyncFetchItem {
     return result;
   }
 
-  Future<void> _runningFuture;
+  Future<void>? _runningFuture;
 
   static Future<void> runFetch(AsyncControllerFetchExpanded<void> fetch) {
     final status = AsyncFetchItem();
     status._runningFuture = fetch(status);
 
-    return status._runningFuture.catchError((dynamic error) {
+    return status._runningFuture!.catchError((dynamic error) {
       assert(error == cancelledError, '$error');
     });
   }
@@ -57,7 +57,7 @@ typedef AsyncControllerFetchExpanded<T> = Future<T> Function(
 
 /// A controller for managing asynchronously loading data.
 abstract class AsyncController<T> extends ChangeNotifier
-    implements ValueListenable<T>, Refreshable {
+    implements ValueListenable<T?>, Refreshable {
   AsyncController();
 
   factory AsyncController.method(AsyncControllerFetch<T> method) {
@@ -69,26 +69,26 @@ abstract class AsyncController<T> extends ChangeNotifier
 
   /// _version == 0 means that there was no fetch yet
   int _version = 0;
-  T _value;
-  Object _error;
+  T? _value;
+  Object? _error;
   bool _isLoading = false;
 
-  AsyncFetchItem _lastFetch;
+  AsyncFetchItem? _lastFetch;
 
   /// Behaviors dictate when loading controller needs to reload.
   final List<LoadingRefresher> _behaviors = [];
 
   @override
-  T get value => _value;
+  T? get value => _value;
 
-  Object get error => _error;
+  Object? get error => _error;
   bool get isLoading => _isLoading;
 
   /// Number of finished fetches since last reset.
   int get version => _version;
 
-  Duration _lastFetchDuration;
-  Duration get lastFetchDuration => _lastFetchDuration;
+  Duration? _lastFetchDuration;
+  Duration? get lastFetchDuration => _lastFetchDuration;
 
   AsyncControllerState get state {
     if (hasData) {
@@ -105,8 +105,7 @@ abstract class AsyncController<T> extends ChangeNotifier
   @override
   void setNeedsRefresh(
       [SetNeedsRefreshFlag flags = SetNeedsRefreshFlag.always]) {
-    if (flags == null ||
-        flags.flagOnlyIfNotLoading && isLoading ||
+    if (flags.flagOnlyIfNotLoading && isLoading ||
         flags.flagOnlyIfError && error == null) {
       return;
     }
@@ -122,7 +121,7 @@ abstract class AsyncController<T> extends ChangeNotifier
     }
   }
 
-  void _cancelCurrentFetch([AsyncFetchItem nextFetch]) {
+  void _cancelCurrentFetch([AsyncFetchItem? nextFetch]) {
     _lastFetch?._isCancelled = true;
     _lastFetch = nextFetch;
   }
@@ -150,7 +149,7 @@ abstract class AsyncController<T> extends ChangeNotifier
 
   /// Immediately runs default fetch or provided func. Previous fetch will be cancelled.
   @protected
-  Future<void> performFetch([AsyncControllerFetchExpanded<T> fetch]) {
+  Future<void> performFetch([AsyncControllerFetchExpanded<T>? fetch]) {
     return AsyncFetchItem.runFetch((status) async {
       _cancelCurrentFetch(status);
       final start = DateTime.now();
@@ -215,11 +214,11 @@ abstract class AsyncController<T> extends ChangeNotifier
   /// This future never fails - there is no need to catch.
   /// If there is error during loading it will handled by the controller.
   /// If multiple widgets call this method, they will get the same future.
-  Future<void> loadIfNeeded() {
+  Future<void>? loadIfNeeded() {
     if (_lastFetch == null) {
       performFetch();
     }
-    return _lastFetch._runningFuture;
+    return _lastFetch!._runningFuture;
   }
 
   /// Adds loading refresher that will have capability to trigger a reload of controller.
@@ -297,14 +296,14 @@ abstract class MappedAsyncController<BaseValue, MappedValue>
   /// For example if searchText for locally implemented search has changed.
   Future<MappedValue> transform(BaseValue data);
 
-  Future<BaseValue> _cachedBase;
+  Future<BaseValue>? _cachedBase;
 
   @override
   Future<MappedValue> fetch(AsyncFetchItem status) async {
     _cachedBase ??= fetchBase();
 
     try {
-      return transform(await _cachedBase);
+      return transform(await _cachedBase!);
     } catch (e) {
       _cachedBase = null;
       rethrow;
@@ -328,7 +327,7 @@ abstract class MappedAsyncController<BaseValue, MappedValue>
 abstract class FilteringAsyncController<Value>
     extends MappedAsyncController<List<Value>, List<Value>> {
   @override
-  bool get hasData => super.hasData && value.isNotEmpty;
+  bool get hasData => super.hasData && value!.isNotEmpty;
 }
 
 /// Provides the latest value from a stream.
@@ -336,9 +335,9 @@ abstract class FilteringAsyncController<Value>
 abstract class StreamAsyncControlelr<T> extends AsyncController<T> {
   Stream<T> getStream(AsyncFetchItem status);
 
-  StreamSubscription<T> _sub;
+  StreamSubscription<T>? _sub;
 
-  Duration get renewAfter => null;
+  Duration? get renewAfter => null;
 
   @override
   void dispose() {
@@ -350,7 +349,7 @@ abstract class StreamAsyncControlelr<T> extends AsyncController<T> {
     performFetch((_) => Future.value(data));
   }
 
-  void _onError(dynamic error, stack) {
+  void _onError(Object error, stack) {
     performFetch((_) => throw error);
   }
 
@@ -358,7 +357,7 @@ abstract class StreamAsyncControlelr<T> extends AsyncController<T> {
     final duration = renewAfter;
     if (renewAfter != null) {
       performFetch((item) async {
-        await item.ifNotCancelled(Future.delayed(duration));
+        await item.ifNotCancelled(Future.delayed(duration!));
         return fetch(item);
       });
     }
