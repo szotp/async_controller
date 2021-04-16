@@ -179,6 +179,7 @@ class UpdatingProperty<T> implements Property<T> {
 /// Displays decoration around the child to indicate that update is happening
 class UpdatingPropertyListener extends StatelessWidget {
   final UpdatingProperty property;
+  final Widget? child;
 
   final Widget Function(
     BuildContext context,
@@ -189,6 +190,7 @@ class UpdatingPropertyListener extends StatelessWidget {
   const UpdatingPropertyListener({
     required this.property,
     required this.decorator,
+    this.child,
   });
 
   @override
