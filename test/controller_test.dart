@@ -33,7 +33,7 @@ void main() {
     final f1 = loader.loadIfNeeded();
     final f2 = loader.loadIfNeeded();
     final f3 = loader.loadIfNeeded();
-    await Future.wait([f1!, f2!, f3!]);
+    await Future.wait([f1, f2, f3]);
     expect(loader.value, 1);
   });
 

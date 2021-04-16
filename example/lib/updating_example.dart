@@ -3,8 +3,8 @@ import 'package:example/helpers.dart';
 import 'package:flutter/material.dart';
 
 class Settings {
-  late String login;
-  late String password;
+  String login = '';
+  String password = '';
   double limit = 0;
 }
 
@@ -47,10 +47,10 @@ class _UpdatingExampleState extends State<UpdatingExample> {
           Row(
             children: <Widget>[
               Expanded(
-                child: AsyncPropertyBuilder(
+                child: AsyncPropertyBuilder<double>(
                   listenable: _c.limit,
                   selector: _c.limit.read,
-                  builder: (context, _, __) {
+                  builder: (context, v, __) {
                     return Slider(
                       value: _c.limit.value,
                       onChanged: _c.limit.update,

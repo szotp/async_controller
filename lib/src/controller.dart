@@ -53,7 +53,8 @@ class AsyncFetchItemCanceled implements Exception {
 
 /// Object created for every fetch to control cancellation.
 class AsyncFetchItem {
-  static const cancelledError = 'cancelled';
+  static const cancelledError = AsyncFetchItemCanceled();
+
   bool _isCancelled = false;
   bool get isCancelled => _isCancelled;
 
@@ -68,15 +69,6 @@ class AsyncFetchItem {
   }
 
   Future<void>? _runningFuture;
-
-  static Future<void> runFetch(AsyncControllerFetchExpanded<void> fetch) {
-    final status = AsyncFetchItem();
-    status._runningFuture = fetch(status);
-
-    return status._runningFuture!.catchError((dynamic error) {
-      assert(error == cancelledError, '$error');
-    });
-  }
 }
 
 enum AsyncControllerState {
@@ -102,7 +94,13 @@ typedef AsyncControllerFetchExpanded<T> = Future<T> Function(
 /// A controller for managing asynchronously loading data.
 abstract class AsyncController<T> extends ChangeNotifier
     implements ValueListenable<T?>, Refreshable {
-  AsyncController();
+  AsyncController([T? initialValue]) {
+    if (initialValue != null) {
+      _value = initialValue;
+      _version = 1;
+      _needsRefresh = false;
+    }
+  }
 
   factory AsyncController.method(AsyncControllerFetch<T> method) {
     return _SimpleAsyncController(method);
@@ -117,7 +115,10 @@ abstract class AsyncController<T> extends ChangeNotifier
   Object? _error;
   bool _isLoading = false;
 
+  final _core = AsyncFetchCore();
+
   AsyncFetchItem? _lastFetch;
+  bool _needsRefresh = true;
 
   /// Behaviors dictate when loading controller needs to reload.
   final List<LoadingRefresher> _behaviors = [];
@@ -159,7 +160,9 @@ abstract class AsyncController<T> extends ChangeNotifier
       return;
     }
 
-    _cancelCurrentFetch();
+    _core.cancel();
+    _needsRefresh = true;
+
     if (hasListeners) {
       performFetch();
     }
@@ -194,7 +197,7 @@ abstract class AsyncController<T> extends ChangeNotifier
   /// Immediately runs default fetch or provided func. Previous fetch will be cancelled.
   @protected
   Future<void> performFetch([AsyncControllerFetchExpanded<T>? fetch]) {
-    return AsyncFetchItem.runFetch((status) async {
+    return _core.perform((status) async {
       _cancelCurrentFetch(status);
       final start = DateTime.now();
 
@@ -216,6 +219,7 @@ abstract class AsyncController<T> extends ChangeNotifier
         _value = value;
         _version += 1;
         _error = null;
+        _needsRefresh = false;
       } catch (e, trace) {
         if (e == AsyncFetchItem.cancelledError) {
           return;
@@ -258,11 +262,17 @@ abstract class AsyncController<T> extends ChangeNotifier
   /// This future never fails - there is no need to catch.
   /// If there is error during loading it will handled by the controller.
   /// If multiple widgets call this method, they will get the same future.
-  Future<void>? loadIfNeeded() {
-    if (_lastFetch == null) {
-      performFetch();
+  Future<void> loadIfNeeded() {
+    final running = _core._current?._runningFuture;
+    if (running != null) {
+      return running;
     }
-    return _lastFetch!._runningFuture;
+
+    if (_needsRefresh) {
+      return performFetch();
+    } else {
+      return Future.value();
+    }
   }
 
   /// Adds loading refresher that will have capability to trigger a reload of controller.

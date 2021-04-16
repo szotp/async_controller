@@ -193,10 +193,15 @@ class UpdatingPropertyListener extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Widget builder(
+        BuildContext context, UpdatingPropertyStatus status, Widget? _) {
+      return decorator(context, status, this);
+    }
+
     return AsyncPropertyBuilder<UpdatingPropertyStatus>(
       listenable: property,
       selector: () => property.status,
-      builder: (context, status, _) => decorator(context, status, this),
+      builder: builder,
     );
   }
 }
