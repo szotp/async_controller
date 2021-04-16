@@ -111,18 +111,37 @@ class AsyncDataDecoration {
     return _CustomizedAsyncDataDecoration(noData);
   }
 
+  /// Constructs widget (usually Text) to describe given error
+  Widget buildErrorDescription(BuildContext context, dynamic error) {
+    return Text(error.toString());
+  }
+
   /// There was error during fetch, we don't data to show so we may show error with try again button.
   Widget buildError(
       BuildContext context, dynamic error, VoidCallback tryAgain) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Text(error.toString()),
-          IconButton(icon: Icon(Icons.refresh), onPressed: tryAgain),
-        ],
+    final errorWidget = buildErrorDescription(context, error);
+
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            errorWidget,
+            IconButton(icon: Icon(Icons.refresh), onPressed: tryAgain),
+          ],
+        ),
       ),
     );
+  }
+
+  /// Shows error after AsyncButton failed.
+  /// By default, a snackbar.
+  void showError(BuildContext context, Object error) {
+    final scaffold = Scaffold.of(context);
+    scaffold.showSnackBar(SnackBar(
+      content: buildErrorDescription(context, error),
+    ));
   }
 
   /// There is no data because it was not loaded yet.
