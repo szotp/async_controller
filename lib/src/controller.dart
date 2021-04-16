@@ -143,7 +143,8 @@ abstract class AsyncController<T> extends ChangeNotifier
   }
 
   @override
-  void setNeedsRefresh(SetNeedsRefreshFlag flags) {
+  void setNeedsRefresh(
+      [SetNeedsRefreshFlag flags = SetNeedsRefreshFlag.always]) {
     if (flags == null ||
         flags.flagOnlyIfNotLoading && isLoading ||
         flags.flagOnlyIfError && error == null) {
@@ -194,7 +195,10 @@ abstract class AsyncController<T> extends ChangeNotifier
     return _core.perform((status) async {
       if (!_isLoading || error != null) {
         _isLoading = true;
-        _error = null;
+
+        if (clearsErrorOnStart) {
+          _error = null;
+        }
 
         // microtask avoids crash that would happen when executing loadIfNeeded from build method
         Future.microtask(notifyListeners);
@@ -206,8 +210,8 @@ abstract class AsyncController<T> extends ChangeNotifier
         _value = value;
         _version += 1;
         _error = null;
+      } catch (e, trace) {
         _needsRefresh = false;
-      } catch (e) {
         if (e == AsyncFetchItem.cancelledError) {
           return;
         }
@@ -215,9 +219,11 @@ abstract class AsyncController<T> extends ChangeNotifier
         if (kDebugMode && AsyncController.debugCheckErrors) {
           // this is disabled in production code and behind a flag
           // ignore: avoid_print
-          print('${this} got error:\n$e');
+          print('${this} got error:\n$e $trace');
 
-          assert(e is! NoSuchMethodError, '$e');
+          if (e is NoSuchMethodError) {
+            rethrow;
+          }
         }
 
         _error = e;
@@ -308,6 +314,11 @@ abstract class AsyncController<T> extends ChangeNotifier
     }
     super.dispose();
   }
+
+  /// If true (default), error from previous fetch will be cleared at the start of new fetch
+  /// If false, error will remain until fetch is completed.
+  @protected
+  bool get clearsErrorOnStart => true;
 }
 
 class _SimpleAsyncController<T> extends AsyncController<T> {

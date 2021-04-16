@@ -9,6 +9,8 @@ class AsyncButtonSettings {
   final BuildContext context;
   final Opacity child;
   final VoidCallback onPressed;
+
+  Color loadingColor;
 }
 
 class AsyncButton extends StatefulWidget {
@@ -41,11 +43,13 @@ class AsyncButton extends StatefulWidget {
     ));
   }
 
-  Widget buildLoadingIndicator() {
+  Widget buildLoadingIndicator(Color loadingColor) {
     Animation<Color> valueColor;
 
-    if (loadingColor != null) {
-      valueColor = AlwaysStoppedAnimation(loadingColor);
+    final loadingColorMerged = loadingColor ?? this.loadingColor;
+
+    if (loadingColorMerged != null) {
+      valueColor = AlwaysStoppedAnimation(loadingColorMerged);
     }
 
     return Padding(
@@ -73,12 +77,15 @@ class AsyncButton extends StatefulWidget {
       state.onPressed,
     );
     return Stack(
+      fit: StackFit.passthrough,
       children: <Widget>[
         builder(settings),
         Visibility(
-            visible: state.isLoading,
-            child:
-                Positioned.fill(child: Center(child: buildLoadingIndicator())))
+          visible: state.isLoading,
+          child: Positioned.fill(
+            child: Center(child: buildLoadingIndicator(settings.loadingColor)),
+          ),
+        )
       ],
     );
   }
