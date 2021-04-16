@@ -2,41 +2,27 @@ import 'dart:async';
 
 import 'package:async_controller/async_controller.dart';
 import 'package:example/helpers.dart';
+import 'package:example/updating_example.dart';
 import 'package:flutter/material.dart';
 import 'package:translator/translator.dart';
 
-class TranslatorController extends AsyncController<String> {
+class TranslatorController extends UpdatingController<String> {
   final _service = GoogleTranslator();
 
-  Duration get delayToRefresh => Duration(seconds: 1);
-
-  String? _input;
-
-  void setInput(String newValue) {
-    _input = newValue;
-    setNeedsRefresh();
-  }
-
-  bool isTranslating = false;
+  TranslatorController() : super('');
 
   @override
-  Future<String> fetch(AsyncFetchItem status) async {
-    if (_input == null || _input!.length < 3) {
-      return Future.value();
-    }
-
-    await status.ifNotCancelled(Future<void>.delayed(delayToRefresh));
-
-    try {
-      isTranslating = true;
-      notifyListeners();
-      final translation = await _service.translate(_input!);
-      return translation.text;
-    } finally {
-      isTranslating = false;
-      notifyListeners();
+  Future<void> update(AsyncFetchItem item, Set<String> keys) async {
+    if (data.value.length > 3) {
+      _translated = (await _service.translate(data.value)).text;
+    } else {
+      _translated = '';
     }
   }
+
+  String? _translated;
+
+  String? get translated => _translated;
 }
 
 class TranslatorPage extends StatefulWidget with ExamplePage {
@@ -48,7 +34,7 @@ class TranslatorPage extends StatefulWidget with ExamplePage {
 }
 
 class _TranslatorPageState extends State<TranslatorPage> {
-  final _data = TranslatorController();
+  final _translator = TranslatorController();
 
   @override
   Widget build(BuildContext context) {
@@ -59,28 +45,21 @@ class _TranslatorPageState extends State<TranslatorPage> {
         child: Column(
           children: <Widget>[
             TextField(
-              onChanged: _data.setInput,
+              onChanged: _translator.data.update,
               decoration: InputDecoration(
-                suffixIcon: _data.buildAsyncVisibility(
-                  selector: () => _data.isTranslating,
-                  child: Icon(Icons.timer),
-                ),
+                suffixIcon: SyncSuffix(property: _translator.data),
               ),
             ),
             SizedBox(height: 16),
-            _data.buildAsyncOpacity(
-              selector: () => !_data.isLoading,
-              child: _data.buildAsyncData(
-                builder: (_, output) {
-                  return Text(
-                    output,
-                    style: TextStyle(fontSize: 30),
-                  );
-                },
-                decorator: AsyncDataDecoration.customized(
-                  noData: Text('Please type more than 3 characters...'),
-                ),
-              ),
+            _translator.buildAsyncProperty<String?>(
+              selector: () => _translator.translated,
+              builder: (context, translated) {
+                if (translated?.isNotEmpty == true) {
+                  return Text(translated ?? '', style: TextStyle(fontSize: 30));
+                } else {
+                  return Text('Please type more than 3 characters...');
+                }
+              },
             ),
           ],
         ),

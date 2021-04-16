@@ -1,16 +1,19 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 class AsyncPropertyBuilder<P> extends StatefulWidget {
-  const AsyncPropertyBuilder(
-      {Key? key,
-      required this.selector,
-      required this.builder,
-      required this.listenable})
-      : super(key: key);
+  const AsyncPropertyBuilder({
+    Key? key,
+    required this.selector,
+    required this.builder,
+    required this.listenable,
+    this.child,
+  }) : super(key: key);
 
   final Listenable listenable;
   final P Function() selector;
-  final Widget Function(BuildContext, P) builder;
+  final ValueWidgetBuilder<P> builder;
+  final Widget? child;
 
   @override
   _AsyncPropertyBuilderState createState() => _AsyncPropertyBuilderState<P>();
@@ -52,6 +55,15 @@ class _AsyncPropertyBuilderState<P> extends State<AsyncPropertyBuilder<P?>> {
 
   @override
   Widget build(BuildContext context) {
-    return widget.builder(context, _current);
+    return widget.builder(context, _current, widget.child);
   }
+}
+
+/// A getter and setter associated with given listenable.
+abstract class Property<T> extends ValueListenable<T> {
+  void update(T newValue);
+}
+
+extension ValueListenableRead<T> on ValueListenable<T> {
+  T read() => value;
 }

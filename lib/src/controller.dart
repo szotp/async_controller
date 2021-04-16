@@ -7,6 +7,50 @@ import 'package:flutter/widgets.dart';
 
 import 'refreshers.dart';
 
+/// Runs one fetch at a time.
+/// If performFetch is called when old fetch is running, the old fetch will be canceled
+class AsyncFetchCore {
+  AsyncFetchItem? _current;
+
+  bool get isRunning => _current != null;
+
+  Future<void> perform(AsyncControllerFetchExpanded<void> fetch) async {
+    _current?._isCancelled = true;
+
+    final status = AsyncFetchItem();
+    _current = status;
+
+    try {
+      status._runningFuture = fetch(status);
+      await status._runningFuture;
+    } on AsyncFetchItemCanceled {
+      // ignore canceled error
+    } finally {
+      if (_current == status) {
+        _current = null;
+      }
+    }
+  }
+
+  /// Cancels current fetch and stops running
+  void cancel() {
+    _current?._isCancelled = true;
+    _current = null;
+  }
+
+  /// Waits until core stops running
+  Future<void> waitIfNeeded() async {
+    while (_current?._runningFuture != null) {
+      await _current?._runningFuture;
+    }
+    assert(!isRunning);
+  }
+}
+
+class AsyncFetchItemCanceled implements Exception {
+  const AsyncFetchItemCanceled();
+}
+
 /// Object created for every fetch to control cancellation.
 class AsyncFetchItem {
   static const cancelledError = 'cancelled';

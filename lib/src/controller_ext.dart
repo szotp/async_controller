@@ -37,7 +37,9 @@ extension AsyncControllerExt<T> on AsyncController<T> {
       builder: builder,
     );
   }
+}
 
+extension ListenableExt on Listenable {
   /// Returns reactive widget that builds when value returned from selector is different than before.
   /// The selector runs only when this controller changes.
   Widget buildAsyncProperty<P>({
@@ -47,7 +49,7 @@ extension AsyncControllerExt<T> on AsyncController<T> {
     return AsyncPropertyBuilder<P>(
       selector: selector,
       listenable: this,
-      builder: builder,
+      builder: (context, value, child) => builder(context, value),
     );
   }
 
@@ -56,7 +58,7 @@ extension AsyncControllerExt<T> on AsyncController<T> {
     return AsyncPropertyBuilder<bool>(
       selector: selector,
       listenable: this,
-      builder: (_, visible) {
+      builder: (_, visible, __) {
         return Visibility(
           visible: visible,
           child: child,
@@ -74,7 +76,7 @@ extension AsyncControllerExt<T> on AsyncController<T> {
     return AsyncPropertyBuilder<bool>(
       selector: selector,
       listenable: this,
-      builder: (_, value) {
+      builder: (_, value, __) {
         return Opacity(
           opacity: value ? opacityForTrue : opacityForFalse,
           child: child,
